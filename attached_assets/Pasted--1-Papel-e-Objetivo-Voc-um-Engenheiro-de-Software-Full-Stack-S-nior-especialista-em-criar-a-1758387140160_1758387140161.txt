@@ -1,0 +1,86 @@
+### 1. Papel e Objetivo
+
+Você é um Engenheiro de Software Full-Stack Sénior, especialista em criar aplicações web robustas e escaláveis. O seu objetivo é ajudar-me a construir um projeto de portfólio completo de um site de e-commerce. O projeto deve demonstrar competências modernas e seguir as melhores práticas de desenvolvimento, sendo ideal para um desenvolvedor freelancer apresentar a potenciais clientes.
+
+### 2. Stack Tecnológico
+
+Vamos usar a seguinte stack:
+
+Frontend: React com TypeScript, utilizando Vite para a configuração do projeto.
+
+Backend: Node.js com Express e TypeScript.
+
+Base de Dados: PostgreSQL, com o ORM Prisma para gerir o acesso aos dados.
+
+Estilização: CSS Modules ou Tailwind CSS para a estilização dos componentes, garantindo um design limpo e responsivo.
+
+### 3. Modelos de Dados (Schema da Base de Dados)
+
+Por favor, defina a seguinte estrutura de dados (pode usar a sintaxe do Prisma Schema):
+
+Produto: deve ter id (UUID), nome (String), descricao (String), preco (Decimal), imageUrl (String), e estoque (Int).
+
+Utilizador: deve ter id (UUID), email (String, único), passwordHash (String), e nome (String).
+
+ItemDoCarrinho: para representar um produto num carrinho, deve ter id, quantidade (Int), e relações com Produto e Utilizador.
+
+Pedido: para representar uma compra finalizada, deve ter id, status (ex: "PROCESSANDO", "ENVIADO"), total (Decimal) e uma relação com Utilizador.
+
+### 4. Funcionalidades Detalhadas
+
+Backend (API em Node.js):
+Crie uma API RESTful com os seguintes endpoints:
+
+GET /api/products: Lista todos os produtos.
+
+GET /api/products/:id: Obtém os detalhes de um único produto.
+
+POST /api/register: Regista um novo utilizador.
+
+POST /api/login: Autentica um utilizador e retorna um token JWT.
+
+GET /api/cart: Obtém os itens do carrinho do utilizador autenticado.
+
+POST /api/cart: Adiciona um item ao carrinho.
+
+DELETE /api/cart/:itemId: Remove um item do carrinho.
+
+POST /api/checkout: Cria um novo pedido a partir do carrinho e simula uma integração de pagamento.
+
+Frontend (Aplicação em React):
+Crie os seguintes componentes/páginas:
+
+HomePage: Mostra uma grelha de produtos obtidos da API.
+
+ProductDetailPage: Mostra os detalhes de um produto quando clicado. Tem um botão "Adicionar ao Carrinho".
+
+CartPage: Mostra os itens no carrinho, permite alterar quantidades, remover itens e ver o total.
+
+CheckoutPage: Um formulário simples para finalizar a compra, com uma simulação de pagamento.
+
+Header: Deve mostrar o logo, links de navegação e o ícone do carrinho com a contagem de itens.
+
+Gestão de Estado do Carrinho: O estado do carrinho de compras deve ser gerido de forma global na aplicação (ex: usando o Context API do React).
+
+### 5. Plano de Implementação
+
+Por favor, forneça o código passo a passo, na seguinte ordem:
+
+A estrutura de pastas para o projeto (uma pasta server para o backend e uma client para o frontend).
+
+O schema.prisma para a base de dados.
+
+O código do servidor Node.js/Express, com as rotas da API e a lógica de negócio.
+
+O código dos componentes React para o frontend, um de cada vez, começando pela HomePage.
+
+### 6. Requisitos Não-Funcionais
+
+O código deve ser limpo, bem comentado e usar TypeScript em todo o projeto.
+
+A API deve ser segura, protegendo as rotas que precisam de autenticação.
+
+O frontend deve ser totalmente responsivo (adaptável a telemóveis).
+
+Inclua uma simulação clara para a integração de pagamento na API de checkout.
+

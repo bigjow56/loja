@@ -10,6 +10,7 @@ import { ArrowLeft, Heart, Star, Minus, Plus, Share2, ShoppingCart, Truck, Shiel
 import { useCart } from "@/contexts/cart-context";
 import { useState } from "react";
 import type { Product } from "@shared/schema";
+import { RecommendationsSection } from "@/components/RecommendationsSection";
 
 export default function ProductDetailPage() {
   const params = useParams();
@@ -533,6 +534,9 @@ export default function ProductDetailPage() {
           </Tabs>
         </div>
       </div>
+
+      {/* Product Recommendations Section */}
+      <RecommendationsSection currentProductId={product.id} />
     </div>
   );
 }

@@ -42,6 +42,15 @@ export function Header() {
               Home
             </Link>
             <Link 
+              href="/produtos" 
+              className={`transition-colors font-medium ${
+                location === "/produtos" ? "text-primary" : "text-foreground hover:text-primary"
+              }`}
+              data-testid="nav-products"
+            >
+              Produtos
+            </Link>
+            <Link 
               href="/cart" 
               className={`transition-colors ${
                 location === "/cart" ? "text-primary" : "text-muted-foreground hover:text-primary"

@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smartphone XYZ Pro 128GB - TechStore</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f8fafc;
+            color: #1f2937;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header */
+        .header {
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #2563eb;
+        }
+
+        .nav-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .cart-icon {
+            position: relative;
+            color: #374151;
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+
+        .cart-count {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #2563eb;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+        }
+
+        /* Breadcrumb */
+        .breadcrumb {
+            padding: 1rem 0;
+            color: #6b7280;
+        }
+
+        .breadcrumb a {
+            color: #2563eb;
+            text-decoration: none;
+        }
+
+        /* Product Section */
+        .product-section {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            margin: 1rem 0;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+
+        .product-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem;
+            align-items: start;
+        }
+
+        /* Gallery */
+        .gallery {
+            position: sticky;
+            top: 120px;
+        }
+
+        .main-image {
+            width: 100%;
+            height: 500px;
+            object-fit: cover;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            cursor: zoom-in;
+            transition: transform 0.3s ease;
+        }
+
+        .main-image:hover {
+            transform: scale(1.05);
+        }
+
+        .thumbnails {
+            display: flex;
+            gap: 0.5rem;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+        }
+
+        .thumbnail {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 8px;
+            cursor: pointer;
+            opacity: 0.7;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .thumbnail.active, .thumbnail:hover {
+            opacity: 1;
+            border-color: #2563eb;
+        }
+
+        /* Product Info */
+        .product-info h1 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: #1f2937;
+        }
+
+        .rating {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .stars {
+            color: #fbbf24;
+        }
+
+        .rating-text {
+            color: #6b7280;
+        }
+
+        .sku {
+            color: #6b7280;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+
+        .price-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .current-price {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #2563eb;
+        }
+
+        .old-price {
+            font-size: 1.2rem;
+            color: #9ca3af;
+            text-decoration: line-through;
+            margin-left: 1rem;
+        }
+
+        .discount-badge {
+            background: #ef4444;
+            color: white;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            margin-left: 1rem;
+        }
+
+        .stock-status {
+            color: #10b981;
+            font-weight: 500;
+            margin-bottom: 1rem;
+        }
+
+        .stock-status.low {
+            color: #f59e0b;
+        }
+
+        .description {
+            color: #6b7280;
+            margin-bottom: 1.5rem;
+            line-height: 1.8;
+        }
+
+        /* Variants */
+        .variants {
+            margin-bottom: 1.5rem;
+        }
+
+        .variant-group {
+            margin-bottom: 1rem;
+        }
+
+        .variant-label {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .color-options {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .color-option {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .color-option.active {
+            border-color: #2563eb;
+            transform: scale(1.1);
+        }
+
+        .size-options {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .size-option {
+            padding: 0.5rem 1rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .size-option.active, .size-option:hover {
+            border-color: #2563eb;
+            background: #eff6ff;
+            color: #2563eb;
+        }
+
+        /* Quantity and Actions */
+        .purchase-section {
+            border-top: 1px solid #e5e7eb;
+            padding-top: 1.5rem;
+        }
+
+        .quantity-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .quantity-label {
+            font-weight: 600;
+        }
+
+        .quantity-control {
+            display: flex;
+            align-items: center;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .qty-btn {
+            background: #f9fafb;
+            border: none;
+            padding: 0.8rem;
+            cursor: pointer;
+            font-size: 1.2rem;
+            width: 40px;
+            transition: background 0.3s ease;
+        }
+
+        .qty-btn:hover {
+            background: #e5e7eb;
+        }
+
+        .qty-input {
+            border: none;
+            text-align: center;
+            width: 60px;
+            padding: 0.8rem 0;
+            font-weight: 600;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .btn-primary {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            flex: 1;
+            transition: background 0.3s ease;
+            font-size: 1rem;
+        }
+
+        .btn-primary:hover {
+            background: #1d4ed8;
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #2563eb;
+            border: 2px solid #2563eb;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            flex: 1;
+            transition: all 0.3s ease;
+        }
+
+        .btn-secondary:hover {
+            background: #2563eb;
+            color: white;
+        }
+
+        .secondary-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+        }
+
+        .action-link {
+            color: #6b7280;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+        }
+
+        .action-link:hover {
+            color: #2563eb;
+            background: #eff6ff;
+        }
+
+        /* Shipping Calculator */
+        .shipping-calc {
+            background: #f9fafb;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .shipping-input {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .cep-input {
+            flex: 1;
+            padding: 0.8rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 6px;
+            font-size: 1rem;
+        }
+
+        .calc-btn {
+            background: #374151;
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .shipping-results {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+        }
+
+        /* Details Tabs */
+        .product-details {
+            margin-top: 3rem;
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid #e5e7eb;
+            margin-bottom: 2rem;
+        }
+
+        .tab {
+            padding: 1rem 1.5rem;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            font-weight: 600;
+            color: #6b7280;
+            transition: all 0.3s ease;
+        }
+
+        .tab.active {
+            color: #2563eb;
+            border-bottom-color: #2563eb;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Reviews */
+        .reviews-summary {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+            padding: 2rem;
+            background: #f9fafb;
+            border-radius: 12px;
+        }
+
+        .rating-overview {
+            text-align: center;
+        }
+
+        .rating-big {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #2563eb;
+        }
+
+        .rating-bars {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .rating-bar {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .bar {
+            flex: 1;
+            height: 8px;
+            background: #e5e7eb;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .bar-fill {
+            height: 100%;
+            background: #fbbf24;
+        }
+
+        .review-item {
+            border-bottom: 1px solid #e5e7eb;
+            padding: 1.5rem 0;
+        }
+
+        .review-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .reviewer-name {
+            font-weight: 600;
+        }
+
+        .review-date {
+            color: #6b7280;
+            font-size: 0.9rem;
+        }
+
+        /* Related Products */
+        .related-products {
+            margin-top: 3rem;
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .product-card {
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+        }
+
+        .product-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+
+        .product-card-info {
+            padding: 1rem;
+        }
+
+        .product-name {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .product-price {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #2563eb;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .product-container {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+
+            .gallery {
+                position: static;
+            }
+
+            .main-image {
+                height: 300px;
+            }
+
+            .thumbnails {
+                justify-content: center;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            .reviews-summary {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .products-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .tabs {
+                flex-wrap: wrap;
+            }
+
+            .tab {
+                padding: 0.8rem 1rem;
+                font-size: 0.9rem;
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .product-section, .related-products {
+            animation: fadeIn 0.6s ease;
+        }
+
+        /* Loading States */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #f3f4f6;
+            border-radius: 50%;
+            border-top-color: #2563eb;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Toast Notification */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #10b981;
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <nav class="nav container">
+            <div class="logo">TechStore</div>
+            <div class="nav-actions">
+                <i class="fas fa-search" style="color: #374151; cursor: pointer;"></i>
+                <div class="cart-icon">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span class="cart-count">3</span>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Breadcrumb -->
+    <div class="container">
+        <div class="breadcrumb">
+            <a href="#">Home</a> > <a href="#">Eletrônicos</a> > <a href="#">Smartphones</a> > Smartphone XYZ Pro 128GB
+        </div>
+    </div>
+
+    <!-- Product Section -->
+    <div class="container">
+        <div class="product-section">
+            <div class="product-container">
+                <!-- Gallery -->
+                <div class="gallery">
+                    <img src="https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=500&h=500&fit=crop" alt="Smartphone XYZ Pro" class="main-image" id="mainImage">
+                    <div class="thumbnails">
+                        <img src="https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=80&h=80&fit=crop" alt="Frente" class="thumbnail active" data-main="https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=500&h=500&fit=crop">
+                        <img src="https://images.unsplash.com/photo-1512499617640-c74ae3a79d37?w=80&h=80&fit=crop" alt="Verso" class="thumbnail" data-main="https://images.unsplash.com/photo-1512499617640-c74ae3a79d37?w=500&h=500&fit=crop">
+                        <img src="https://images.unsplash.com/photo-1574944985070-8f3ebc6b79d2?w=80&h=80&fit=crop" alt="Lateral" class="thumbnail" data-main="https://images.unsplash.com/photo-1574944985070-8f3ebc6b79d2?w=500&h=500&fit=crop">
+                        <img src="https://images.unsplash.com/photo-1567721913486-6585f069b332?w=80&h=80&fit=crop" alt="Tela" class="thumbnail" data-main="https://images.unsplash.com/photo-1567721913486-6585f069b332?w=500&h=500&fit=crop">
+                        <img src="https://images.unsplash.com/photo-1616348436168-de43ad0db179?w=80&h=80&fit=crop" alt="Câmeras" class="thumbnail" data-main="https://images.unsplash.com/photo-1616348436168-de43ad0db179?w=500&h=500&fit=crop">
+                    </div>
+                </div>
+
+                <!-- Product Info -->
+                <div class="product-info">
+                    <h1>Smartphone XYZ Pro 128GB</h1>
+                    
+                    <div class="rating">
+                        <div class="stars">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star-half-alt"></i>
+                        </div>
+                        <span class="rating-text">4.5 (127 avaliações)</span>
+                    </div>
+
+                    <div class="sku">SKU: SPH-XYZ-128-BL</div>
+
+                    <div class="price-section">
+                        <span class="current-price">R$ 899,90</span>
+                        <span class="old-price">R$ 1.199,90</span>
+                        <span class="discount-badge">25% OFF</span>
+                    </div>
+
+                    <div class="stock-status">✅ Em estoque (15 unidades disponíveis)</div>
+
+                    <div class="description">
+                        Experimente a mais nova geração de smartphones com o XYZ Pro. Com tela AMOLED de 6.1", processador Snapdragon 888 e câmera tripla de 64MP, este smartphone oferece performance excepcional para todas as suas necessidades.
+                    </div>
+
+                    <!-- Variants -->
+                    <div class="variants">
+                        <div class="variant-group">
+                            <label class="variant-label">Cor:</label>
+                            <div class="color-options">
+                                <div class="color-option active" style="background: #1e40af;" data-color="azul"></div>
+                                <div class="color-option" style="background: #000000;" data-color="preto"></div>
+                                <div class="color-option" style="background: #ffffff; border: 1px solid #e5e7eb;" data-color="branco"></div>
+                            </div>
+                        </div>
+
+                        <div class="variant-group">
+                            <label class="variant-label">Armazenamento:</label>
+                            <div class="size-options">
+                                <div class="size-option active" data-storage="128">128GB</div>
+                                <div class="size-option" data-storage="256">256GB</div>
+                                <div class="size-option" data-storage="512">512GB</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Purchase Section -->
+                    <div class="purchase-section">
+                        <div class="quantity-section">
+                            <span class="quantity-label">Quantidade:</span>
+                            <div class="quantity-control">
+                                <button class="qty-btn" onclick="productManager.changeQuantity(-1)">-</button>
+                                <input type="number" class="qty-input" value="1" min="1" max="15" id="quantity">
+                                <button class="qty-btn" onclick="productManager.changeQuantity(1)">+</button>
+                            </div>
+                        </div>
+
+                        <div class="action-buttons">
+                            <button class="btn-primary" onclick="productManager.addToCart()">
+                                <i class="fas fa-shopping-cart"></i> Adicionar ao Carrinho
+                            </button>
+                            <button class="btn-secondary" onclick="productManager.buyNow()">
+                                Comprar Agora
+                            </button>
+                        </div>
+
+                        <div class="secondary-actions">
+                            <a href="#" class="action-link" onclick="productManager.toggleWishlist()">
+                                <i class="far fa-heart" id="wishlist-icon"></i> Favoritar
+                            </a>
+                            <a href="#" class="action-link" onclick="productManager.shareProduct()">
+                                <i class="fas fa-share"></i> Compartilhar
+                            </a>
+                        </div>
+
+                        <!-- Shipping Calculator -->
+                        <div class="shipping-calc">
+                            <label><strong>Calcular frete e prazo:</strong></label>
+                            <div class="shipping-input">
+                                <input type="text" class="cep-input" placeholder="Digite seu CEP" maxlength="9" id="cepInput">
+                                <button class="calc-btn" onclick="productManager.calculateShipping()">Calcular</button>
+                            </div>
+                            <div id="shippingResults"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Product Details Tabs -->
+        <div class="product-details">
+            <div class="tabs">
+                <div class="tab active" onclick="productManager.showTab('description')">Descrição</div>
+                <div class="tab" onclick="productManager.showTab('specifications')">Especificações</div>
+                <div class="tab" onclick="productManager.showTab('reviews')">Avaliações</div>
+                <div class="tab" onclick="productManager.showTab('qa')">Perguntas</div>
+            </div>
+
+            <div class="tab-content active" id="description">
+                <h3>Descrição Completa</h3>
+                <p>O Smartphone XYZ Pro representa o que há de mais avançado em tecnologia móvel. Projetado para usuários exigentes que buscam performance, qualidade e inovação em um só dispositivo.</p>
+                
+                <h4>Características Principais:</h4>
+                <ul>
+                    <li><strong>Display AMOLED 6.1"</strong> - Cores vibrantes e contraste infinito</li>
+                    <li><strong>Processador Snapdragon 888</strong> - Performance de última geração</li>
+                    <li><strong>8GB de RAM</strong> - Multitarefa sem travamentos</li>
+                    <li><strong>Câmera Tripla 64MP</strong> - Fotos profissionais</li>
+                    <li><strong>Bateria 4000mAh</strong> - Dura o dia todo</li>
+                    <li><strong>Carregamento Rápido 65W</strong> - 100% em 30 minutos</li>
+                </ul>
+            </div>
+
+            <div class="tab-content" id="specifications">
+                <h3>Especificações Técnicas</h3>
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tr style="border-bottom: 1px solid #e5e7eb;">
+                        <td style="padding: 0.5rem; font-weight: 600;">Display</td>
+                        <td style="padding: 0.5rem;">6.1" AMOLED, 2400x1080, 120Hz</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #e5e7eb;">
+                        <td style="padding: 0.5rem; font-weight: 600;">Processador</td>
+                        <td style="padding: 0.5rem;">Snapdragon 888 Octa-core</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #e5e7eb;">
+                        <td style="padding: 0.5rem; font-weight: 600;">Memória RAM</td>
+                        <td style="padding: 0.5rem;">8GB LPDDR5</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #e5e7eb;">
+                        <td style="padding: 0.5rem; font-weight: 600;">Armazenamento</td>
+                        <td style="padding: 0.5rem;">128GB/256GB/512GB UFS 3.1</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #e5e7eb;">
+                        <td style="padding: 0.5rem; font-weight: 600;">Câmera Principal</td>
+                        <td style="padding: 0.5rem;">64MP + 12MP Ultra Wide + 5MP Macro</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #e5e7eb;">
+                        <td style="padding: 0.5rem; font-weight: 600;">Câmera Frontal</td>
+                        <td style="padding: 0.5rem;">32MP</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #e5e7eb;">
+                        <td style="padding: 0.5rem; font-weight: 600;">Bateria</td>
+                        <td style="padding: 0.5rem;">4000mAh com carregamento rápido 65W</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 0.5rem; font-weight: 600;">Sistema</td>
+                        <td style="padding: 0.5rem;">Android 13</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="tab-content" id="reviews">
+                <div class="reviews-summary">
+                    <div class="rating-overview">
+                        <div class="rating-big">4.5</div>
+                        <div class="stars" style="font-size: 1.2rem; margin: 0.5rem 0;">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star-half-alt"></i>
+                        </div>
+                        <div>127 avaliações</div>
+                        <div style="margin-top: 0.5rem; color: #6b7280;">95% recomenda</div>
+                    </div>
+
+                    <div class="rating-bars">
+                        <div class="rating-bar">
+                            <span>5★</span>
+                            <div class="bar"><div class="bar-fill" style="width: 70%;"></div></div>
+                            <span>70%</span>
+                        </div>
+                        <div class="rating-bar">
+                            <span>4★</span>
+                            <div class="bar"><div class="bar-fill" style="width: 20%;"></div></div>
+                            <span>20%</span>
+                        </div>
+                        <div class="

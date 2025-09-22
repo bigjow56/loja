@@ -1,0 +1,112 @@
+Objetivo
+Criar uma página de visualização de produtos moderna, eficiente e responsiva para um e-commerce, utilizando as cores branco, azul e preto como paleta principal.
+Especificações Técnicas
+Tecnologias
+
+Frontend: HTML5, CSS3, JavaScript (ES6+)
+Framework CSS: Tailwind CSS ou CSS puro com Flexbox/Grid
+Responsividade: Mobile-first design
+Performance: Lazy loading para imagens, código otimizado
+
+Paleta de Cores
+
+Primária: Azul (#2563eb, #3b82f6, #60a5fa)
+Secundária: Preto (#000000, #1f2937, #374151)
+Base: Branco (#ffffff, #f9fafb, #f3f4f6)
+
+Funcionalidades Principais
+Layout da Página
+
+Header/Navegação
+
+Logo do e-commerce
+Barra de pesquisa
+Carrinho de compras
+Menu de categorias
+
+
+Área de Filtros (Sidebar ou topo)
+
+Filtro por categoria
+Filtro por preço (slider)
+Filtro por marca
+Filtro por avaliação
+Botão "Limpar filtros"
+
+
+Grid de Produtos
+
+Layout responsivo (4 colunas desktop, 2 móvel)
+Cards de produtos com hover effects
+Paginação ou scroll infinito
+
+
+Ordenação
+
+Mais relevantes
+Menor preço
+Maior preço
+Melhor avaliados
+Mais vendidos
+
+
+
+Card do Produto
+Cada produto deve conter:
+
+Imagem do produto (com placeholder)
+Nome do produto
+Preço atual
+Preço anterior (se em promoção)
+Avaliação em estrelas
+Botão "Adicionar ao Carrinho"
+Badge de desconto (se aplicável)
+Ícone de favoritar
+
+Interações e Animations
+
+Hover effects nos cards
+Loading states elegantes
+Transições suaves
+Modal de produto (opcional)
+Feedback visual ao adicionar ao carrinho
+
+Funcionalidades JavaScript
+
+Filtros funcionais
+Ordenação dinâmica
+Sistema de favoritos
+Contador de produtos no carrinho
+Lazy loading de imagens
+Busca em tempo real
+
+Dados de Exemplo
+Crie pelo menos 12 produtos fictícios com:
+
+Nomes variados
+Preços entre R$ 29,90 e R$ 299,90
+Categorias: Eletrônicos, Roupas, Casa, Esportes
+Avaliações de 3.0 a 5.0 estrelas
+Alguns com desconto
+
+Requisitos de Design
+Estilo Visual
+
+Design limpo e minimalista
+Tipografia legível (Roboto, Inter ou similar)
+Espaçamento consistente
+Sombras sutis para profundidade
+Border radius suave
+
+Responsividade
+
+Mobile: 1 coluna de filtros, 2 colunas de produtos
+Tablet: 2-3 colunas de produtos
+Desktop: Sidebar de filtros, 3-4 colunas de produtos
+
+Acessibilidade
+
+Alt text nas imagens
+Contraste adequado
+Navegação por teclado
+Labels apropriados

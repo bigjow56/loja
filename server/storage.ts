@@ -17,7 +17,7 @@ import {
   type OrderItem,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and } from "drizzle-orm";
+import { eq, and, ne, desc, asc } from "drizzle-orm";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 
@@ -34,6 +34,11 @@ export interface IStorage {
   getAllProducts(): Promise<Product[]>;
   getProduct(id: string): Promise<Product | undefined>;
   createProduct(product: InsertProduct): Promise<Product>;
+  
+  // Product recommendations
+  getRelatedProducts(productId: string, limit?: number): Promise<Product[]>;
+  getBestsellingProducts(limit?: number): Promise<Product[]>;
+  getFeaturedProducts(limit?: number): Promise<Product[]>;
 
   // Cart operations
   getCartItems(userId: string): Promise<CartItemWithProduct[]>;
@@ -94,6 +99,53 @@ export class DatabaseStorage implements IStorage {
   async createProduct(insertProduct: InsertProduct): Promise<Product> {
     const [product] = await db.insert(products).values(insertProduct).returning();
     return product;
+  }
+
+  // Product recommendations
+  async getRelatedProducts(productId: string, limit: number = 6): Promise<Product[]> {
+    // First, get the current product to understand its category and brand
+    const currentProduct = await this.getProduct(productId);
+    if (!currentProduct) return [];
+
+    // Priority algorithm:
+    // 1. Same category + same brand (highest priority)
+    // 2. Same category + different brand
+    // 3. Different category + same brand (if needed to fill quota)
+    
+    const relatedProducts = await db
+      .select()
+      .from(products)
+      .where(
+        and(
+          ne(products.id, productId), // Exclude current product
+          eq(products.categoria, currentProduct.categoria) // Same category
+        )
+      )
+      .orderBy(
+        // Order by rating first, then by sales - brand priority will be handled by separate query if needed
+        desc(products.avaliacao),
+        desc(products.vendas)
+      )
+      .limit(limit);
+
+    return relatedProducts;
+  }
+
+  async getBestsellingProducts(limit: number = 6): Promise<Product[]> {
+    return await db
+      .select()
+      .from(products)
+      .orderBy(desc(products.vendas), desc(products.avaliacao))
+      .limit(limit);
+  }
+
+  async getFeaturedProducts(limit: number = 6): Promise<Product[]> {
+    return await db
+      .select()
+      .from(products)
+      .where(eq(products.isFeatured, true))
+      .orderBy(desc(products.vendas), desc(products.avaliacao))
+      .limit(limit);
   }
 
   // Cart operations

@@ -1,6 +1,6 @@
 import { useAdminAuth } from "@/hooks/use-auth";
 import { Loader2, ShieldAlert } from "lucide-react";
-import { Redirect, Route } from "wouter";
+import { Redirect, Route, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -14,6 +14,7 @@ export function ProtectedAdminRoute({
   requiredRole?: "admin" | "super_admin";
 }) {
   const { user, isLoading, canAccessAdmin, hasRole } = useAdminAuth();
+  const [, setLocation] = useLocation();
 
   if (isLoading) {
     return (
@@ -54,7 +55,7 @@ export function ProtectedAdminRoute({
               </p>
               <Button 
                 variant="outline" 
-                onClick={() => window.location.href = "/"}
+                onClick={() => setLocation("/")}
                 data-testid="button-home"
               >
                 Voltar ao Início

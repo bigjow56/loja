@@ -16,6 +16,8 @@ import CartPage from "@/pages/cart-page";
 import CheckoutPage from "@/pages/checkout-page";
 import { AdminDashboard } from "@/pages/admin/dashboard";
 import { AdminProductsList } from "@/pages/admin/products-list";
+import { AdminProductCreate } from "@/pages/admin/product-create";
+import { AdminProductEdit } from "@/pages/admin/product-edit";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -25,6 +27,8 @@ function Router() {
         {/* Admin routes - must come first to avoid conflicts */}
         <ProtectedAdminRoute path="/admin" component={AdminDashboard} />
         <ProtectedAdminRoute path="/admin/products" component={AdminProductsList} />
+        <ProtectedAdminRoute path="/admin/products/new" component={AdminProductCreate} />
+        <ProtectedAdminRoute path="/admin/products/:id/edit" component={AdminProductEdit} />
         
         {/* Regular app routes with header */}
         <Route path="/" component={() => (

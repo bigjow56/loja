@@ -37,6 +37,18 @@ export function AdminProductsList() {
 
   const { data: products = [], isLoading } = useQuery<Product[]>({
     queryKey: ["/api/admin/products", { search, status: statusFilter, category: categoryFilter }],
+    queryFn: () => {
+      const params = new URLSearchParams();
+      if (search) params.set('search', search);
+      if (statusFilter !== 'all') params.set('status', statusFilter);
+      if (categoryFilter !== 'all') params.set('category', categoryFilter);
+      
+      const url = `/api/admin/products${params.toString() ? `?${params.toString()}` : ''}`;
+      return fetch(url, { credentials: 'include' }).then(res => {
+        if (!res.ok) throw new Error('Failed to fetch products');
+        return res.json();
+      });
+    },
   });
 
   const { data: categories = [] } = useQuery<any[]>({
@@ -63,15 +75,8 @@ export function AdminProductsList() {
     },
   });
 
-  const filteredProducts = products.filter(product => {
-    const matchesSearch = product.nome.toLowerCase().includes(search.toLowerCase()) ||
-                         product.sku?.toLowerCase().includes(search.toLowerCase()) ||
-                         product.marca.toLowerCase().includes(search.toLowerCase());
-    const matchesStatus = statusFilter === "all" || product.status === statusFilter;
-    const matchesCategory = categoryFilter === "all" || product.categoryId === categoryFilter;
-    
-    return matchesSearch && matchesStatus && matchesCategory;
-  });
+  // Products are already filtered server-side
+  const filteredProducts = products;
 
   const getStatusBadge = (status: string) => {
     switch (status) {

@@ -71,6 +71,7 @@ export function setupAuth(app: Express) {
         email,
         nome,
         passwordHash: await hashPassword(password),
+        role: "user", // Default role for new registrations
       });
 
       // Remove passwordHash from response
@@ -104,4 +105,44 @@ export function setupAuth(app: Express) {
     const { passwordHash, ...safeUser } = req.user!;
     res.json(safeUser);
   });
+}
+
+// Authorization middleware functions
+export function requireAuth(req: any, res: any, next: any) {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ message: "Unauthorized: Please login" });
+  }
+  next();
+}
+
+export function requireRole(role: "admin" | "super_admin") {
+  return (req: any, res: any, next: any) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Unauthorized: Please login" });
+    }
+    
+    if (req.user.role !== role && req.user.role !== "super_admin") {
+      return res.status(403).json({ 
+        message: `Forbidden: ${role} role required`,
+        userRole: req.user.role 
+      });
+    }
+    
+    next();
+  };
+}
+
+export function requireAnyAdminRole(req: any, res: any, next: any) {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ message: "Unauthorized: Please login" });
+  }
+  
+  if (req.user.role !== "admin" && req.user.role !== "super_admin") {
+    return res.status(403).json({ 
+      message: "Forbidden: Admin role required",
+      userRole: req.user.role 
+    });
+  }
+  
+  next();
 }

@@ -84,6 +84,10 @@ export const products = pgTable("products", {
   featuredIndex: index("products_featured_idx").on(table.isFeatured),
   statusIndex: index("products_status_idx").on(table.status),
   vendasIndex: index("products_vendas_idx").on(table.vendas),
+  // Business rule constraints
+  precoPositiveCheck: sql`CONSTRAINT check_preco_positive CHECK (${table.preco}::numeric > 0)`,
+  estoqueNonNegativeCheck: sql`CONSTRAINT check_estoque_non_negative CHECK (${table.estoque} >= 0)`,
+  estoqueMinimoNonNegativeCheck: sql`CONSTRAINT check_estoque_minimo_non_negative CHECK (${table.estoqueMinimo} >= 0)`,
 }));
 
 export const cartItems = pgTable("cart_items", {
@@ -125,6 +129,10 @@ export const productImages = pgTable("product_images", {
   productIndex: index("product_images_product_idx").on(table.productId),
   ordemIndex: index("product_images_ordem_idx").on(table.ordem),
   primaryIndex: index("product_images_primary_idx").on(table.isPrimary),
+  // Ensure unique images per product
+  uniqueProductUrl: uniqueIndex("product_images_url_unique").on(table.productId, table.url),
+  uniqueProductOrdem: uniqueIndex("product_images_ordem_unique").on(table.productId, table.ordem),
+  // Ensure only one primary image per product (will need SQL for partial index)
 }));
 
 // Product variations table - sizes, colors, etc.
@@ -140,8 +148,13 @@ export const productVariations = pgTable("product_variations", {
   createdAt: timestamp("created_at").defaultNow(),
 }, (table) => ({
   productIndex: index("product_variations_product_idx").on(table.productId),
-  skuIndex: index("product_variations_sku_idx").on(table.sku),
+  skuIndex: uniqueIndex("product_variations_sku_idx").on(table.sku),
   activeIndex: index("product_variations_active_idx").on(table.isActive),
+  // Ensure unique variations per product
+  uniqueProductVariation: uniqueIndex("unique_product_variation").on(table.productId, table.nome, table.valor),
+  // Business rule constraints
+  estoqueNonNegativeCheck: sql`CONSTRAINT check_estoque_variation_non_negative CHECK (${table.estoque} >= 0)`,
+  precoAdicionalNonNegativeCheck: sql`CONSTRAINT check_preco_adicional_non_negative CHECK (${table.precoAdicional}::numeric >= 0)`,
 }));
 
 // Product stock table - scalable stock control (separate table as suggested)
@@ -161,6 +174,13 @@ export const productStock = pgTable("product_stock", {
   variationIndex: index("product_stock_variation_idx").on(table.variationId),
   localizacaoIndex: index("product_stock_localizacao_idx").on(table.localizacao),
   validadeIndex: index("product_stock_validade_idx").on(table.dataValidade),
+  // Composite unique for stock control
+  uniqueStockLocation: uniqueIndex("product_stock_location_unique").on(table.productId, table.variationId, table.localizacao, table.lote),
+  // Business rule constraints
+  quantidadeNonNegativeCheck: sql`CONSTRAINT check_quantidade_non_negative CHECK (${table.quantidade} >= 0)`,
+  quantidadeReservadaNonNegativeCheck: sql`CONSTRAINT check_quantidade_reservada_non_negative CHECK (${table.quantidadeReservada} >= 0)`,
+  reservadaWithinTotalCheck: sql`CONSTRAINT check_reservada_within_total CHECK (${table.quantidadeReservada} <= ${table.quantidade})`,
+  productOrVariationCheck: sql`CONSTRAINT check_product_or_variation_not_null CHECK (${table.productId} IS NOT NULL OR ${table.variationId} IS NOT NULL)`,
 }));
 
 // Price history table for tracking price changes (for reports)

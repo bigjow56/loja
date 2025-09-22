@@ -18,6 +18,7 @@ export const seedProducts = async () => {
     const seedProducts = [
       {
         nome: "iPhone 15 Pro",
+        slug: "iphone-15-pro",
         descricao: "Smartphone Apple iPhone 15 Pro com chip A17 Pro, câmera de 48MP e tela de 6.1 polegadas",
         preco: "8999.00",
         precoAnterior: "9999.00",
@@ -33,6 +34,7 @@ export const seedProducts = async () => {
       },
       {
         nome: "Samsung Galaxy S24 Ultra",
+        slug: "samsung-galaxy-s24-ultra",
         descricao: "Smartphone Samsung Galaxy S24 Ultra com S Pen, câmera de 200MP e tela de 6.8 polegadas",
         preco: "7999.00",
         precoAnterior: "8999.00",
@@ -48,6 +50,7 @@ export const seedProducts = async () => {
       },
       {
         nome: "MacBook Air M3",
+        slug: "macbook-air-m3",
         descricao: "Notebook Apple MacBook Air 13 polegadas com chip M3, 8GB RAM e 256GB SSD",
         preco: "12999.00",
         precoAnterior: "14999.00",
@@ -63,6 +66,7 @@ export const seedProducts = async () => {
       },
       {
         nome: "Dell XPS 13",
+        slug: "dell-xps-13",
         descricao: "Notebook Dell XPS 13 com processador Intel Core i7, 16GB RAM e 512GB SSD",
         preco: "8999.00",
         precoAnterior: "10999.00",
@@ -78,6 +82,7 @@ export const seedProducts = async () => {
       },
       {
         nome: "iPad Pro 12.9",
+        slug: "ipad-pro-129",
         descricao: "Tablet Apple iPad Pro 12.9 polegadas com chip M2, 128GB e suporte a Apple Pencil",
         preco: "6999.00",
         precoAnterior: "7999.00",
@@ -93,6 +98,7 @@ export const seedProducts = async () => {
       },
       {
         nome: "Samsung Galaxy Tab S9",
+        slug: "samsung-galaxy-tab-s9",
         descricao: "Tablet Samsung Galaxy Tab S9 com tela de 11 polegadas, S Pen inclusa e 128GB",
         preco: "4999.00",
         precoAnterior: "5999.00",
@@ -108,6 +114,7 @@ export const seedProducts = async () => {
       },
       {
         nome: "AirPods Pro 2",
+        slug: "airpods-pro-2",
         descricao: "Fones de ouvido Apple AirPods Pro com cancelamento ativo de ruído e case MagSafe",
         preco: "1799.00",
         precoAnterior: "2199.00",
@@ -123,6 +130,7 @@ export const seedProducts = async () => {
       },
       {
         nome: "Sony WH-1000XM5",
+        slug: "sony-wh-1000xm5",
         descricao: "Fones de ouvido over-ear Sony com cancelamento de ruído premium e 30h de bateria",
         preco: "1999.00",
         precoAnterior: "2499.00",
@@ -138,6 +146,7 @@ export const seedProducts = async () => {
       },
       {
         nome: "Nintendo Switch OLED",
+        slug: "nintendo-switch-oled",
         descricao: "Console Nintendo Switch modelo OLED com tela de 7 polegadas e 64GB de armazenamento",
         preco: "2299.00",
         precoAnterior: "2599.00",
@@ -153,6 +162,7 @@ export const seedProducts = async () => {
       },
       {
         nome: "PlayStation 5",
+        slug: "playstation-5",
         descricao: "Console Sony PlayStation 5 com SSD de 825GB e suporte a jogos 4K/120fps",
         preco: "4599.00",
         precoAnterior: "4999.00",
@@ -168,6 +178,7 @@ export const seedProducts = async () => {
       },
       {
         nome: "Apple Watch Series 9",
+        slug: "apple-watch-series-9",
         descricao: "Smartwatch Apple Watch Series 9 GPS de 45mm com pulseira esportiva",
         preco: "3299.00",
         precoAnterior: "3799.00",
@@ -183,6 +194,7 @@ export const seedProducts = async () => {
       },
       {
         nome: "Samsung Galaxy Watch 6",
+        slug: "samsung-galaxy-watch-6",
         descricao: "Smartwatch Samsung Galaxy Watch 6 Classic de 47mm com GPS e monitoramento de saúde",
         preco: "2199.00",
         precoAnterior: "2699.00",

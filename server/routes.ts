@@ -1,8 +1,8 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupAuth } from "./auth";
-import { insertCartItemSchema, insertOrderSchema } from "@shared/schema";
+import { setupAuth, requireAnyAdminRole } from "./auth";
+import { insertCartItemSchema, insertOrderSchema, insertProductSchema } from "@shared/schema";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -244,6 +244,102 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching orders:", error);
       res.status(500).json({ message: "Failed to fetch orders" });
+    }
+  });
+
+  // Admin routes (protected with admin role)
+  app.get("/api/admin/dashboard", requireAnyAdminRole, async (req, res) => {
+    try {
+      const stats = await storage.getDashboardStats();
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching dashboard stats:", error);
+      res.status(500).json({ message: "Failed to fetch dashboard stats" });
+    }
+  });
+
+  app.get("/api/admin/products", requireAnyAdminRole, async (req, res) => {
+    try {
+      const { search, status, category } = req.query;
+      let products = await storage.getAllProducts();
+      
+      // Apply filters if provided
+      if (search && typeof search === 'string') {
+        const searchLower = search.toLowerCase();
+        products = products.filter(product => 
+          product.nome.toLowerCase().includes(searchLower) ||
+          product.sku?.toLowerCase().includes(searchLower) ||
+          product.marca.toLowerCase().includes(searchLower)
+        );
+      }
+      
+      if (status && status !== 'all' && typeof status === 'string') {
+        products = products.filter(product => product.status === status);
+      }
+      
+      if (category && category !== 'all' && typeof category === 'string') {
+        products = products.filter(product => product.categoryId === category);
+      }
+      
+      res.json(products);
+    } catch (error) {
+      console.error("Error fetching admin products:", error);
+      res.status(500).json({ message: "Failed to fetch products" });
+    }
+  });
+
+  app.post("/api/admin/products", requireAnyAdminRole, async (req, res) => {
+    try {
+      const parseResult = insertProductSchema.safeParse(req.body);
+      if (!parseResult.success) {
+        return res.status(400).json({
+          message: "Invalid product data",
+          errors: parseResult.error.errors
+        });
+      }
+
+      const product = await storage.createProduct(parseResult.data);
+      res.status(201).json(product);
+    } catch (error) {
+      console.error("Error creating product:", error);
+      res.status(500).json({ message: "Failed to create product" });
+    }
+  });
+
+  app.put("/api/admin/products/:id", requireAnyAdminRole, async (req, res) => {
+    try {
+      const parseResult = insertProductSchema.partial().safeParse(req.body);
+      if (!parseResult.success) {
+        return res.status(400).json({
+          message: "Invalid product data",
+          errors: parseResult.error.errors
+        });
+      }
+
+      const product = await storage.updateProduct(req.params.id, parseResult.data);
+      if (!product) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+
+      res.json(product);
+    } catch (error) {
+      console.error("Error updating product:", error);
+      res.status(500).json({ message: "Failed to update product" });
+    }
+  });
+
+  app.delete("/api/admin/products/:id", requireAnyAdminRole, async (req, res) => {
+    try {
+      const product = await storage.getProduct(req.params.id);
+      if (!product) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+
+      await storage.deleteProduct(req.params.id);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting product:", error);
+      res.status(500).json({ message: "Failed to delete product" });
     }
   });
 

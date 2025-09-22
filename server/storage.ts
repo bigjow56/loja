@@ -17,7 +17,7 @@ import {
   type OrderItem,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, ne, desc, asc } from "drizzle-orm";
+import { eq, and, ne, desc, asc, sql } from "drizzle-orm";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 
@@ -34,6 +34,23 @@ export interface IStorage {
   getAllProducts(): Promise<Product[]>;
   getProduct(id: string): Promise<Product | undefined>;
   createProduct(product: InsertProduct): Promise<Product>;
+  updateProduct(id: string, product: Partial<InsertProduct>): Promise<Product | undefined>;
+  deleteProduct(id: string): Promise<void>;
+  
+  // Admin operations
+  getDashboardStats(): Promise<{
+    totalProducts: number;
+    totalUsers: number;
+    totalOrders: number;
+    lowStockProducts: number;
+    recentProducts: Product[];
+    stockAlerts: Array<{
+      productId: string;
+      productName: string;
+      currentStock: number;
+      minimumStock: number | null;
+    }>;
+  }>;
   
   // Product recommendations
   getRelatedProducts(productId: string, limit?: number): Promise<Product[]>;
@@ -99,6 +116,68 @@ export class DatabaseStorage implements IStorage {
   async createProduct(insertProduct: InsertProduct): Promise<Product> {
     const [product] = await db.insert(products).values(insertProduct).returning();
     return product;
+  }
+
+  async updateProduct(id: string, updateData: Partial<InsertProduct>): Promise<Product | undefined> {
+    const [updatedProduct] = await db
+      .update(products)
+      .set({ ...updateData, updatedAt: new Date() })
+      .where(eq(products.id, id))
+      .returning();
+    return updatedProduct;
+  }
+
+  async deleteProduct(id: string): Promise<void> {
+    await db.delete(products).where(eq(products.id, id));
+  }
+
+  async getDashboardStats() {
+    // Get total counts
+    const [totalProductsResult] = await db
+      .select({ count: sql<number>`count(*)`.mapWith(Number) })
+      .from(products);
+    
+    const [totalUsersResult] = await db
+      .select({ count: sql<number>`count(*)`.mapWith(Number) })
+      .from(users);
+    
+    const [totalOrdersResult] = await db
+      .select({ count: sql<number>`count(*)`.mapWith(Number) })
+      .from(orders);
+
+    // Get products with low stock
+    const [lowStockResult] = await db
+      .select({ count: sql<number>`count(*)`.mapWith(Number) })
+      .from(products)
+      .where(sql`${products.estoque} <= ${products.estoqueMinimo}`);
+
+    // Get recent products (last 5)
+    const recentProducts = await db
+      .select()
+      .from(products)
+      .orderBy(desc(products.createdAt))
+      .limit(5);
+
+    // Get stock alerts (products with low stock)
+    const stockAlerts = await db
+      .select({
+        productId: products.id,
+        productName: products.nome,
+        currentStock: products.estoque,
+        minimumStock: products.estoqueMinimo,
+      })
+      .from(products)
+      .where(sql`${products.estoque} <= ${products.estoqueMinimo}`)
+      .limit(10);
+
+    return {
+      totalProducts: totalProductsResult.count || 0,
+      totalUsers: totalUsersResult.count || 0,
+      totalOrders: totalOrdersResult.count || 0,
+      lowStockProducts: lowStockResult.count || 0,
+      recentProducts,
+      stockAlerts,
+    };
   }
 
   // Product recommendations

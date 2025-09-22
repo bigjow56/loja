@@ -107,3 +107,22 @@ export function useAuth() {
   }
   return context;
 }
+
+// Hook especializado para funcionalidades admin
+export function useAdminAuth() {
+  const { user, isLoading, error } = useAuth();
+  
+  const isAdmin = user?.role === "admin" || user?.role === "super_admin";
+  const isSuperAdmin = user?.role === "super_admin";
+  
+  return {
+    user,
+    isLoading,
+    error,
+    isAdmin,
+    isSuperAdmin,
+    isAuthenticated: !!user,
+    canAccessAdmin: isAdmin,
+    hasRole: (role: "user" | "admin" | "super_admin") => user?.role === role || (user?.role === "super_admin" && role !== "super_admin")
+  };
+}

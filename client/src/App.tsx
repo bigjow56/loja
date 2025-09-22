@@ -9,6 +9,7 @@ import { ProtectedRoute } from "@/lib/protected-route";
 import { Header } from "@/components/header";
 import HomePage from "@/pages/home-page";
 import AuthPage from "@/pages/auth-page";
+import ProductsPage from "@/pages/products-page.tsx";
 import ProductDetailPage from "@/pages/product-detail-page";
 import CartPage from "@/pages/cart-page";
 import CheckoutPage from "@/pages/checkout-page";
@@ -20,6 +21,7 @@ function Router() {
       <Header />
       <Switch>
         <Route path="/" component={HomePage} />
+        <Route path="/produtos" component={ProductsPage} />
         <Route path="/auth" component={AuthPage} />
         <Route path="/product/:id" component={ProductDetailPage} />
         <ProtectedRoute path="/cart" component={CartPage} />

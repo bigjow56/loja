@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth } from "./auth";
 import { insertCartItemSchema, insertOrderSchema } from "@shared/schema";
+import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
@@ -15,6 +16,79 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching products:", error);
       res.status(500).json({ message: "Failed to fetch products" });
+    }
+  });
+
+  // Query parameter validation schema
+  const limitQuerySchema = z.object({
+    limit: z.preprocess(
+      (val) => (Array.isArray(val) ? val[0] : val),
+      z.coerce.number().int().min(1).max(24).default(6)
+    )
+  });
+
+  // Product recommendation routes (MUST come before /:id route to avoid conflicts)
+  app.get("/api/products/bestsellers", async (req, res) => {
+    try {
+      const parseResult = limitQuerySchema.safeParse(req.query);
+      if (!parseResult.success) {
+        return res.status(400).json({ 
+          message: "Invalid query parameters",
+          errors: parseResult.error.errors
+        });
+      }
+      
+      const { limit } = parseResult.data;
+      const bestsellingProducts = await storage.getBestsellingProducts(limit);
+      res.json(bestsellingProducts);
+    } catch (error) {
+      console.error("Error fetching bestselling products:", error);
+      res.status(500).json({ message: "Failed to fetch bestselling products" });
+    }
+  });
+
+  app.get("/api/products/featured", async (req, res) => {
+    try {
+      const parseResult = limitQuerySchema.safeParse(req.query);
+      if (!parseResult.success) {
+        return res.status(400).json({ 
+          message: "Invalid query parameters",
+          errors: parseResult.error.errors
+        });
+      }
+      
+      const { limit } = parseResult.data;
+      const featuredProducts = await storage.getFeaturedProducts(limit);
+      res.json(featuredProducts);
+    } catch (error) {
+      console.error("Error fetching featured products:", error);
+      res.status(500).json({ message: "Failed to fetch featured products" });
+    }
+  });
+
+  app.get("/api/products/:id/related", async (req, res) => {
+    try {
+      const parseResult = limitQuerySchema.safeParse(req.query);
+      if (!parseResult.success) {
+        return res.status(400).json({ 
+          message: "Invalid query parameters",
+          errors: parseResult.error.errors
+        });
+      }
+      
+      const { limit } = parseResult.data;
+
+      // Check if the base product exists (for consistency with other product endpoints)
+      const baseProduct = await storage.getProduct(req.params.id);
+      if (!baseProduct) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+
+      const relatedProducts = await storage.getRelatedProducts(req.params.id, limit);
+      res.json(relatedProducts);
+    } catch (error) {
+      console.error("Error fetching related products:", error);
+      res.status(500).json({ message: "Failed to fetch related products" });
     }
   });
 

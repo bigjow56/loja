@@ -1,4 +1,4 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -18,7 +18,16 @@ import { AdminDashboard } from "@/pages/admin/dashboard";
 import { AdminProductsList } from "@/pages/admin/products-list";
 import { AdminProductCreate } from "@/pages/admin/product-create";
 import { AdminProductEdit } from "@/pages/admin/product-edit";
+import { CategoriesList } from "@/pages/admin/categories-list";
+import { CategoryForm } from "@/pages/admin/category-form";
 import NotFound from "@/pages/not-found";
+
+// Wrapper component for category edit
+function CategoryEditWrapper() {
+  const [location] = useLocation();
+  const id = location.split('/').pop(); // Extract ID from URL
+  return <CategoryForm mode="edit" id={id} />;
+}
 
 function Router() {
   return (
@@ -29,6 +38,9 @@ function Router() {
         <ProtectedAdminRoute path="/admin/products" component={AdminProductsList} />
         <ProtectedAdminRoute path="/admin/products/new" component={AdminProductCreate} />
         <ProtectedAdminRoute path="/admin/products/:id/edit" component={AdminProductEdit} />
+        <ProtectedAdminRoute path="/admin/categories" component={CategoriesList} />
+        <ProtectedAdminRoute path="/admin/categories/create" component={() => <CategoryForm mode="create" />} />
+        <ProtectedAdminRoute path="/admin/categories/edit/:id" component={CategoryEditWrapper} />
         
         {/* Regular app routes with header */}
         <Route path="/" component={() => (

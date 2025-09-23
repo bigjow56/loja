@@ -43,6 +43,10 @@ export interface IStorage {
   
   // Category operations
   getAllCategories(): Promise<Category[]>;
+  getCategory(id: string): Promise<Category | undefined>;
+  createCategory(category: Omit<Category, 'id' | 'createdAt' | 'updatedAt'>): Promise<Category>;
+  updateCategory(id: string, category: Partial<Omit<Category, 'id' | 'createdAt' | 'updatedAt'>>): Promise<Category | undefined>;
+  deleteCategory(id: string): Promise<void>;
   
   // Tag operations
   getAllTags(): Promise<Tag[]>;
@@ -120,6 +124,29 @@ export class DatabaseStorage implements IStorage {
 
   async getAllCategories(): Promise<Category[]> {
     return await db.select().from(categories);
+  }
+
+  async getCategory(id: string): Promise<Category | undefined> {
+    const [category] = await db.select().from(categories).where(eq(categories.id, id));
+    return category;
+  }
+
+  async createCategory(insertCategory: Omit<Category, 'id' | 'createdAt' | 'updatedAt'>): Promise<Category> {
+    const [category] = await db.insert(categories).values(insertCategory).returning();
+    return category;
+  }
+
+  async updateCategory(id: string, updateData: Partial<Omit<Category, 'id' | 'createdAt' | 'updatedAt'>>): Promise<Category | undefined> {
+    const [updatedCategory] = await db
+      .update(categories)
+      .set({ ...updateData, updatedAt: new Date() })
+      .where(eq(categories.id, id))
+      .returning();
+    return updatedCategory;
+  }
+
+  async deleteCategory(id: string): Promise<void> {
+    await db.delete(categories).where(eq(categories.id, id));
   }
 
   async getAllTags(): Promise<Tag[]> {

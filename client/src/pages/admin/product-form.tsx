@@ -68,7 +68,11 @@ const productFormSchema = z.object({
       const num = parseFloat(val.replace(",", "."));
       return !isNaN(num) && num > 0;
     }, "Preço promocional deve ser um número válido"),
-  precoAnterior: z.string().optional(),
+  precoAnterior: z.string()
+    .optional()
+    .refine((val) => !val || !isNaN(parseFloat(val.replace(",", "."))), {
+      message: "Preço deve ser um número válido"
+    }),
   avaliacao: z.string()
     .optional()
     .refine((val) => {
@@ -98,6 +102,15 @@ const productFormSchema = z.object({
 }, {
   message: "Preço promocional deve ser menor que o preço regular",
   path: ["precoPromocional"],
+}).refine((data) => {
+  // Require categoryId when categoria is selected
+  if (data.categoria && data.categoria !== "geral" && !data.categoryId) {
+    return false;
+  }
+  return true;
+}, {
+  message: "Categoria deve ser selecionada",
+  path: ["categoria"]
 });
 
 type ProductFormData = z.infer<typeof productFormSchema>;
@@ -196,18 +209,10 @@ export function ProductForm({ mode }: ProductFormProps) {
         avaliacao: data.avaliacao ? parseFloat(data.avaliacao.replace(",", ".")) : 5.0,
       };
 
-      const response = await fetch("/api/admin/products", {
+      return await apiRequest("/api/admin/products", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(productData),
       });
-      
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Erro ao criar produto");
-      }
-      
-      return response.json();
     },
     onSuccess: () => {
       toast({
@@ -241,18 +246,10 @@ export function ProductForm({ mode }: ProductFormProps) {
         avaliacao: data.avaliacao ? parseFloat(data.avaliacao.replace(",", ".")) : 5.0,
       };
 
-      const response = await fetch(`/api/admin/products/${id}`, {
+      return await apiRequest(`/api/admin/products/${id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(productData),
       });
-      
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Erro ao atualizar produto");
-      }
-      
-      return response.json();
     },
     onSuccess: () => {
       toast({
@@ -414,13 +411,14 @@ export function ProductForm({ mode }: ProductFormProps) {
                       <FormItem>
                         <FormLabel>Categoria</FormLabel>
                         <Select onValueChange={(value) => {
-                          field.onChange(value);
-                          // Find the category and set categoryId
-                          const category = categories.find(cat => cat.nome === value);
+                          // Find the category by ID and set both fields
+                          const category = categories.find(cat => cat.id === value);
                           if (category) {
                             form.setValue("categoryId", category.id);
+                            form.setValue("categoria", category.nome);
+                            field.onChange(category.nome);
                           }
-                        }} defaultValue={field.value}>
+                        }} defaultValue={product?.categoryId || ""}>
                           <FormControl>
                             <SelectTrigger data-testid="select-categoria">
                               <SelectValue placeholder="Selecione uma categoria" />
@@ -429,7 +427,7 @@ export function ProductForm({ mode }: ProductFormProps) {
                           <SelectContent>
                             {categories.length > 0 ? (
                               categories.map((category) => (
-                                <SelectItem key={category.id} value={category.nome}>
+                                <SelectItem key={category.id} value={category.id}>
                                   {category.nome}
                                 </SelectItem>
                               ))

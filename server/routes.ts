@@ -356,8 +356,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/admin/categories", requirePermission("category:manage"), async (req, res) => {
     try {
-      // Implement category creation
-      res.status(501).json({ message: "Category creation not implemented yet" });
+      const categoryData = req.body;
+      const category = await storage.createCategory(categoryData);
+      res.status(201).json(category);
     } catch (error) {
       console.error("Error creating category:", error);
       res.status(500).json({ message: "Failed to create category" });
@@ -366,8 +367,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/admin/categories/:id", requirePermission("category:manage"), async (req, res) => {
     try {
-      // Implement category update
-      res.status(501).json({ message: "Category update not implemented yet" });
+      const categoryData = req.body;
+      const category = await storage.updateCategory(req.params.id, categoryData);
+      if (!category) {
+        return res.status(404).json({ message: "Category not found" });
+      }
+      res.json(category);
     } catch (error) {
       console.error("Error updating category:", error);
       res.status(500).json({ message: "Failed to update category" });
@@ -376,8 +381,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/admin/categories/:id", requirePermission("category:manage"), async (req, res) => {
     try {
-      // Implement category deletion
-      res.status(501).json({ message: "Category deletion not implemented yet" });
+      const category = await storage.getCategory(req.params.id);
+      if (!category) {
+        return res.status(404).json({ message: "Category not found" });
+      }
+
+      await storage.deleteCategory(req.params.id);
+      res.status(204).send();
     } catch (error) {
       console.error("Error deleting category:", error);
       res.status(500).json({ message: "Failed to delete category" });

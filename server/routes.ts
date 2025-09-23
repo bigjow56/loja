@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, requireAnyAdminRole, requirePermission, requireAnyPermission } from "./auth";
-import { insertCartItemSchema, insertOrderSchema, insertProductSchema, insertCategorySchema } from "@shared/schema";
+import { insertCartItemSchema, insertOrderSchema, insertProductSchema, insertCategorySchema, insertTagSchema, insertProductImageSchema } from "@shared/schema";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -377,7 +377,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      const category = await storage.createCategory(parseResult.data);
+      const categoryData = {
+        ...parseResult.data,
+        isActive: parseResult.data.isActive ?? true, // Default to true if undefined
+        descricao: parseResult.data.descricao ?? null // Convert undefined to null
+      };
+      const category = await storage.createCategory(categoryData);
       res.status(201).json(category);
     } catch (error) {
       console.error("Error creating category:", error);
@@ -432,10 +437,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/tags/:id", async (req, res) => {
+    try {
+      const tag = await storage.getTag(req.params.id);
+      if (!tag) {
+        return res.status(404).json({ message: "Tag not found" });
+      }
+      res.json(tag);
+    } catch (error) {
+      console.error("Error fetching tag:", error);
+      res.status(500).json({ message: "Failed to fetch tag" });
+    }
+  });
+
   app.post("/api/admin/tags", requirePermission("tag:manage"), async (req, res) => {
     try {
-      // Implement tag creation
-      res.status(501).json({ message: "Tag creation not implemented yet" });
+      const parseResult = insertTagSchema.safeParse(req.body);
+      if (!parseResult.success) {
+        return res.status(400).json({
+          message: "Invalid tag data",
+          errors: parseResult.error.errors
+        });
+      }
+
+      const tag = await storage.createTag(parseResult.data);
+      res.status(201).json(tag);
     } catch (error) {
       console.error("Error creating tag:", error);
       res.status(500).json({ message: "Failed to create tag" });
@@ -444,8 +470,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/admin/tags/:id", requirePermission("tag:manage"), async (req, res) => {
     try {
-      // Implement tag update
-      res.status(501).json({ message: "Tag update not implemented yet" });
+      const parseResult = insertTagSchema.partial().safeParse(req.body);
+      if (!parseResult.success) {
+        return res.status(400).json({
+          message: "Invalid tag data",
+          errors: parseResult.error.errors
+        });
+      }
+
+      const tag = await storage.updateTag(req.params.id, parseResult.data);
+      if (!tag) {
+        return res.status(404).json({ message: "Tag not found" });
+      }
+      res.json(tag);
     } catch (error) {
       console.error("Error updating tag:", error);
       res.status(500).json({ message: "Failed to update tag" });
@@ -454,11 +491,192 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/admin/tags/:id", requirePermission("tag:manage"), async (req, res) => {
     try {
-      // Implement tag deletion
-      res.status(501).json({ message: "Tag deletion not implemented yet" });
+      await storage.deleteTag(req.params.id);
+      res.status(204).send();
     } catch (error) {
       console.error("Error deleting tag:", error);
       res.status(500).json({ message: "Failed to delete tag" });
+    }
+  });
+
+  // Product Images routes
+  app.get("/api/products/:id/images", async (req, res) => {
+    try {
+      const images = await storage.getProductImages(req.params.id);
+      res.json(images);
+    } catch (error) {
+      console.error("Error fetching product images:", error);
+      res.status(500).json({ message: "Failed to fetch product images" });
+    }
+  });
+
+  app.post("/api/admin/products/:id/images", requirePermission("product:update"), async (req, res) => {
+    try {
+      const parseResult = insertProductImageSchema.safeParse({
+        ...req.body,
+        productId: req.params.id
+      });
+      if (!parseResult.success) {
+        return res.status(400).json({
+          message: "Invalid image data",
+          errors: parseResult.error.errors
+        });
+      }
+
+      const image = await storage.addProductImage(parseResult.data);
+      res.status(201).json(image);
+    } catch (error) {
+      console.error("Error adding product image:", error);
+      res.status(500).json({ message: "Failed to add product image" });
+    }
+  });
+
+  app.put("/api/admin/products/:productId/images/:imageId", requirePermission("product:update"), async (req, res) => {
+    try {
+      const parseResult = insertProductImageSchema.partial().safeParse(req.body);
+      if (!parseResult.success) {
+        return res.status(400).json({
+          message: "Invalid image data",
+          errors: parseResult.error.errors
+        });
+      }
+
+      const image = await storage.updateProductImage(req.params.imageId, parseResult.data);
+      if (!image) {
+        return res.status(404).json({ message: "Image not found" });
+      }
+      res.json(image);
+    } catch (error) {
+      console.error("Error updating product image:", error);
+      res.status(500).json({ message: "Failed to update product image" });
+    }
+  });
+
+  app.delete("/api/admin/products/:productId/images/:imageId", requirePermission("product:update"), async (req, res) => {
+    try {
+      await storage.deleteProductImage(req.params.imageId);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting product image:", error);
+      res.status(500).json({ message: "Failed to delete product image" });
+    }
+  });
+
+  app.put("/api/admin/products/:productId/images/:imageId/primary", requirePermission("product:update"), async (req, res) => {
+    try {
+      await storage.setPrimaryImage(req.params.productId, req.params.imageId);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error setting primary image:", error);
+      res.status(500).json({ message: "Failed to set primary image" });
+    }
+  });
+
+  app.put("/api/admin/products/:productId/images/reorder", requirePermission("product:update"), async (req, res) => {
+    try {
+      const { imageOrders } = req.body;
+      if (!Array.isArray(imageOrders)) {
+        return res.status(400).json({ message: "imageOrders must be an array" });
+      }
+
+      await storage.reorderProductImages(req.params.productId, imageOrders);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error reordering product images:", error);
+      res.status(500).json({ message: "Failed to reorder product images" });
+    }
+  });
+
+  // Product Tags routes
+  app.get("/api/products/:id/tags", async (req, res) => {
+    try {
+      const tags = await storage.getProductTags(req.params.id);
+      res.json(tags);
+    } catch (error) {
+      console.error("Error fetching product tags:", error);
+      res.status(500).json({ message: "Failed to fetch product tags" });
+    }
+  });
+
+  app.post("/api/admin/products/:productId/tags/:tagId", requirePermission("product:update"), async (req, res) => {
+    try {
+      await storage.addProductTag(req.params.productId, req.params.tagId);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error adding product tag:", error);
+      res.status(500).json({ message: "Failed to add product tag" });
+    }
+  });
+
+  app.delete("/api/admin/products/:productId/tags/:tagId", requirePermission("product:update"), async (req, res) => {
+    try {
+      await storage.removeProductTag(req.params.productId, req.params.tagId);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error removing product tag:", error);
+      res.status(500).json({ message: "Failed to remove product tag" });
+    }
+  });
+
+  app.put("/api/admin/products/:productId/tags", requirePermission("product:update"), async (req, res) => {
+    try {
+      const { tagIds } = req.body;
+      if (!Array.isArray(tagIds)) {
+        return res.status(400).json({ message: "tagIds must be an array" });
+      }
+
+      await storage.setProductTags(req.params.productId, tagIds);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error setting product tags:", error);
+      res.status(500).json({ message: "Failed to set product tags" });
+    }
+  });
+
+  // Stock Management routes
+  app.get("/api/admin/stock/alerts", requirePermission("stock:read"), async (req, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 20;
+      const alerts = await storage.getStockAlerts(limit);
+      res.json(alerts);
+    } catch (error) {
+      console.error("Error fetching stock alerts:", error);
+      res.status(500).json({ message: "Failed to fetch stock alerts" });
+    }
+  });
+
+  app.get("/api/admin/stock/summary", requirePermission("stock:read"), async (req, res) => {
+    try {
+      const summary = await storage.getStockSummary();
+      res.json(summary);
+    } catch (error) {
+      console.error("Error fetching stock summary:", error);
+      res.status(500).json({ message: "Failed to fetch stock summary" });
+    }
+  });
+
+  app.get("/api/admin/products/:id/stock", requirePermission("stock:read"), async (req, res) => {
+    try {
+      const stock = await storage.getProductStock(req.params.id);
+      res.json(stock);
+    } catch (error) {
+      console.error("Error fetching product stock:", error);
+      res.status(500).json({ message: "Failed to fetch product stock" });
+    }
+  });
+
+  app.put("/api/admin/products/:id/stock", requirePermission("stock:adjust"), async (req, res) => {
+    try {
+      const { quantidade, location } = req.body;
+      if (typeof quantidade !== 'number' || quantidade < 0) {
+        return res.status(400).json({ message: "Invalid quantity" });
+      }
+
+      await storage.updateProductStock(req.params.id, quantidade, location);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error updating product stock:", error);
+      res.status(500).json({ message: "Failed to update product stock" });
     }
   });
 

@@ -6,10 +6,15 @@ import {
   orderItems,
   categories,
   tags,
+  productImages,
+  productTags,
+  productStock,
   type User,
   type InsertUser,
   type Product,
   type InsertProduct,
+  type ProductImage,
+  type InsertProductImage,
   type CartItem,
   type InsertCartItem,
   type CartItemWithProduct,
@@ -19,6 +24,9 @@ import {
   type OrderItem,
   type Category,
   type Tag,
+  type InsertTag,
+  type ProductStock,
+  type StockAlert,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, ne, desc, asc, sql } from "drizzle-orm";
@@ -50,6 +58,35 @@ export interface IStorage {
   
   // Tag operations
   getAllTags(): Promise<Tag[]>;
+  getTag(id: string): Promise<Tag | undefined>;
+  createTag(tag: InsertTag): Promise<Tag>;
+  updateTag(id: string, tag: Partial<InsertTag>): Promise<Tag | undefined>;
+  deleteTag(id: string): Promise<void>;
+  
+  // Product Image operations
+  getProductImages(productId: string): Promise<ProductImage[]>;
+  addProductImage(image: InsertProductImage): Promise<ProductImage>;
+  updateProductImage(id: string, image: Partial<InsertProductImage>): Promise<ProductImage | undefined>;
+  deleteProductImage(id: string): Promise<void>;
+  setPrimaryImage(productId: string, imageId: string): Promise<void>;
+  reorderProductImages(productId: string, imageOrders: { id: string; ordem: number }[]): Promise<void>;
+  
+  // Product Tags operations
+  getProductTags(productId: string): Promise<Tag[]>;
+  addProductTag(productId: string, tagId: string): Promise<void>;
+  removeProductTag(productId: string, tagId: string): Promise<void>;
+  setProductTags(productId: string, tagIds: string[]): Promise<void>;
+  
+  // Stock operations
+  getStockAlerts(limit?: number): Promise<StockAlert[]>;
+  getProductStock(productId: string): Promise<ProductStock[]>;
+  updateProductStock(productId: string, quantidade: number, location?: string): Promise<void>;
+  getStockSummary(): Promise<{
+    totalProducts: number;
+    lowStockCount: number;
+    outOfStockCount: number;
+    totalValue: number;
+  }>;
   
   // Admin operations
   getDashboardStats(): Promise<{
@@ -150,7 +187,237 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAllTags(): Promise<Tag[]> {
-    return await db.select().from(tags);
+    return await db.select().from(tags).orderBy(asc(tags.nome));
+  }
+
+  async getTag(id: string): Promise<Tag | undefined> {
+    const [tag] = await db.select().from(tags).where(eq(tags.id, id));
+    return tag;
+  }
+
+  async createTag(insertTag: InsertTag): Promise<Tag> {
+    const [tag] = await db.insert(tags).values(insertTag).returning();
+    return tag;
+  }
+
+  async updateTag(id: string, updateData: Partial<InsertTag>): Promise<Tag | undefined> {
+    const [updatedTag] = await db
+      .update(tags)
+      .set(updateData)
+      .where(eq(tags.id, id))
+      .returning();
+    return updatedTag;
+  }
+
+  async deleteTag(id: string): Promise<void> {
+    // First remove all product-tag associations
+    await db.delete(productTags).where(eq(productTags.tagId, id));
+    // Then delete the tag
+    await db.delete(tags).where(eq(tags.id, id));
+  }
+
+  // Product Image operations
+  async getProductImages(productId: string): Promise<ProductImage[]> {
+    return await db
+      .select()
+      .from(productImages)
+      .where(eq(productImages.productId, productId))
+      .orderBy(asc(productImages.ordem));
+  }
+
+  async addProductImage(imageData: InsertProductImage): Promise<ProductImage> {
+    const [image] = await db.insert(productImages).values(imageData).returning();
+    return image;
+  }
+
+  async updateProductImage(id: string, updateData: Partial<InsertProductImage>): Promise<ProductImage | undefined> {
+    const [updatedImage] = await db
+      .update(productImages)
+      .set(updateData)
+      .where(eq(productImages.id, id))
+      .returning();
+    return updatedImage;
+  }
+
+  async deleteProductImage(id: string): Promise<void> {
+    await db.delete(productImages).where(eq(productImages.id, id));
+  }
+
+  async setPrimaryImage(productId: string, imageId: string): Promise<void> {
+    // First set all images for this product as non-primary
+    await db
+      .update(productImages)
+      .set({ isPrimary: false })
+      .where(eq(productImages.productId, productId));
+    
+    // Then set the specified image as primary
+    await db
+      .update(productImages)
+      .set({ isPrimary: true })
+      .where(eq(productImages.id, imageId));
+  }
+
+  async reorderProductImages(productId: string, imageOrders: { id: string; ordem: number }[]): Promise<void> {
+    // Update each image's order
+    for (const { id, ordem } of imageOrders) {
+      await db
+        .update(productImages)
+        .set({ ordem })
+        .where(and(
+          eq(productImages.id, id),
+          eq(productImages.productId, productId)
+        ));
+    }
+  }
+
+  // Product Tags operations
+  async getProductTags(productId: string): Promise<Tag[]> {
+    const result = await db
+      .select({
+        id: tags.id,
+        nome: tags.nome,
+        slug: tags.slug,
+        cor: tags.cor,
+        isActive: tags.isActive,
+        createdAt: tags.createdAt,
+      })
+      .from(productTags)
+      .innerJoin(tags, eq(productTags.tagId, tags.id))
+      .where(eq(productTags.productId, productId))
+      .orderBy(asc(tags.nome));
+    
+    return result;
+  }
+
+  async addProductTag(productId: string, tagId: string): Promise<void> {
+    try {
+      await db.insert(productTags).values({ productId, tagId });
+    } catch (error) {
+      // Ignore if already exists (unique constraint)
+    }
+  }
+
+  async removeProductTag(productId: string, tagId: string): Promise<void> {
+    await db.delete(productTags).where(
+      and(
+        eq(productTags.productId, productId),
+        eq(productTags.tagId, tagId)
+      )
+    );
+  }
+
+  async setProductTags(productId: string, tagIds: string[]): Promise<void> {
+    // Remove all existing tags for this product
+    await db.delete(productTags).where(eq(productTags.productId, productId));
+    
+    // Add new tags
+    if (tagIds.length > 0) {
+      await db.insert(productTags).values(
+        tagIds.map(tagId => ({ productId, tagId }))
+      );
+    }
+  }
+
+  // Stock operations
+  async getStockAlerts(limit: number = 20): Promise<StockAlert[]> {
+    const alerts = await db
+      .select({
+        productId: products.id,
+        productName: products.nome,
+        currentStock: products.estoque,
+        minimumStock: products.estoqueMinimo,
+      })
+      .from(products)
+      .where(sql`${products.estoque} <= ${products.estoqueMinimo}`)
+      .orderBy(asc(sql`${products.estoque} - ${products.estoqueMinimo}`))
+      .limit(limit);
+
+    return alerts.map(alert => ({
+      ...alert,
+      minimumStock: alert.minimumStock || 5 // Default to 5 if null
+    }));
+  }
+
+  async getProductStock(productId: string): Promise<ProductStock[]> {
+    return await db
+      .select()
+      .from(productStock)
+      .where(eq(productStock.productId, productId))
+      .orderBy(asc(productStock.localizacao));
+  }
+
+  async updateProductStock(productId: string, quantidade: number, location: string = 'default'): Promise<void> {
+    // Check if stock entry exists for this product and location
+    const [existingStock] = await db
+      .select()
+      .from(productStock)
+      .where(
+        and(
+          eq(productStock.productId, productId),
+          eq(productStock.localizacao, location)
+        )
+      );
+
+    if (existingStock) {
+      // Update existing stock
+      await db
+        .update(productStock)
+        .set({ 
+          quantidade: Math.max(0, quantidade),
+          updatedAt: new Date()
+        })
+        .where(eq(productStock.id, existingStock.id));
+    } else {
+      // Create new stock entry
+      await db.insert(productStock).values({
+        productId,
+        quantidade: Math.max(0, quantidade),
+        localizacao: location,
+      });
+    }
+
+    // Also update the main product stock (legacy field)
+    await db
+      .update(products)
+      .set({ 
+        estoque: Math.max(0, quantidade),
+        updatedAt: new Date()
+      })
+      .where(eq(products.id, productId));
+  }
+
+  async getStockSummary(): Promise<{
+    totalProducts: number;
+    lowStockCount: number;
+    outOfStockCount: number;
+    totalValue: number;
+  }> {
+    const [totalProductsResult] = await db
+      .select({ count: sql<number>`count(*)`.mapWith(Number) })
+      .from(products);
+    
+    const [lowStockResult] = await db
+      .select({ count: sql<number>`count(*)`.mapWith(Number) })
+      .from(products)
+      .where(sql`${products.estoque} <= ${products.estoqueMinimo}`);
+    
+    const [outOfStockResult] = await db
+      .select({ count: sql<number>`count(*)`.mapWith(Number) })
+      .from(products)
+      .where(eq(products.estoque, 0));
+    
+    const [totalValueResult] = await db
+      .select({ 
+        total: sql<number>`COALESCE(SUM(${products.preco}::numeric * ${products.estoque}), 0)`.mapWith(Number) 
+      })
+      .from(products);
+    
+    return {
+      totalProducts: totalProductsResult.count || 0,
+      lowStockCount: lowStockResult.count || 0,
+      outOfStockCount: outOfStockResult.count || 0,
+      totalValue: totalValueResult.total || 0,
+    };
   }
 
   async getProduct(id: string): Promise<Product | undefined> {

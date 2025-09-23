@@ -20,13 +20,22 @@ import { AdminProductCreate } from "@/pages/admin/product-create";
 import { AdminProductEdit } from "@/pages/admin/product-edit";
 import { CategoriesList } from "@/pages/admin/categories-list";
 import { CategoryForm } from "@/pages/admin/category-form";
+import { TagsList } from "@/pages/admin/tags-list";
+import { TagForm } from "@/pages/admin/tag-form";
 import NotFound from "@/pages/not-found";
 
-// Wrapper component for category edit
+// Wrapper components for edit modes
 function CategoryEditWrapper() {
   const [location] = useLocation();
   const id = location.split('/').pop(); // Extract ID from URL
   return <CategoryForm mode="edit" id={id} />;
+}
+
+function TagEditWrapper() {
+  const [location] = useLocation();
+  const pathSegments = location.split('/');
+  const id = pathSegments[pathSegments.length - 2]; // Get ID before 'edit'
+  return <TagForm mode="edit" id={id} />;
 }
 
 function Router() {
@@ -41,6 +50,9 @@ function Router() {
         <ProtectedAdminRoute path="/admin/categories" component={CategoriesList} />
         <ProtectedAdminRoute path="/admin/categories/create" component={() => <CategoryForm mode="create" />} />
         <ProtectedAdminRoute path="/admin/categories/edit/:id" component={CategoryEditWrapper} />
+        <ProtectedAdminRoute path="/admin/tags" component={TagsList} />
+        <ProtectedAdminRoute path="/admin/tags/create" component={() => <TagForm mode="create" />} />
+        <ProtectedAdminRoute path="/admin/tags/:id/edit" component={TagEditWrapper} />
         
         {/* Regular app routes with header */}
         <Route path="/" component={() => (

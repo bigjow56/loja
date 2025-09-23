@@ -3,17 +3,24 @@ import { Loader2, ShieldAlert } from "lucide-react";
 import { Redirect, Route, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Permission, Role } from "@shared/schema";
 
 export function ProtectedAdminRoute({
   path,
   component: Component,
-  requiredRole = "admin",
+  requiredRole,
+  requiredPermission,
+  requiredAnyPermissions,
+  requiredAllPermissions,
 }: {
   path: string;
   component: () => React.JSX.Element;
-  requiredRole?: "admin" | "super_admin";
+  requiredRole?: Role;
+  requiredPermission?: Permission;
+  requiredAnyPermissions?: Permission[];
+  requiredAllPermissions?: Permission[];
 }) {
-  const { user, isLoading, canAccessAdmin, hasRole } = useAdminAuth();
+  const { user, isLoading, canAccessAdmin, hasRole, hasPermission, hasAnyPermission, hasAllPermissions } = useAdminAuth();
   const [, setLocation] = useLocation();
 
   if (isLoading) {
@@ -34,7 +41,31 @@ export function ProtectedAdminRoute({
     );
   }
 
-  if (!canAccessAdmin || !hasRole(requiredRole)) {
+  // Check if user has required access
+  let hasRequiredAccess = canAccessAdmin;
+  let accessDeniedMessage = "Você não possui permissões para acessar esta área.";
+
+  if (hasRequiredAccess && requiredRole) {
+    hasRequiredAccess = hasRole(requiredRole);
+    accessDeniedMessage = `É necessário ter o papel de ${requiredRole}.`;
+  }
+
+  if (hasRequiredAccess && requiredPermission) {
+    hasRequiredAccess = hasPermission(requiredPermission);
+    accessDeniedMessage = `É necessária a permissão: ${requiredPermission}.`;
+  }
+
+  if (hasRequiredAccess && requiredAnyPermissions) {
+    hasRequiredAccess = hasAnyPermission(requiredAnyPermissions);
+    accessDeniedMessage = `É necessária uma das permissões: ${requiredAnyPermissions.join(', ')}.`;
+  }
+
+  if (hasRequiredAccess && requiredAllPermissions) {
+    hasRequiredAccess = hasAllPermissions(requiredAllPermissions);
+    accessDeniedMessage = `São necessárias todas as permissões: ${requiredAllPermissions.join(', ')}.`;
+  }
+
+  if (!hasRequiredAccess) {
     return (
       <Route path={path}>
         <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -45,8 +76,7 @@ export function ProtectedAdminRoute({
               </div>
               <CardTitle>Acesso Negado</CardTitle>
               <CardDescription>
-                Você não possui permissões para acessar esta área. 
-                {requiredRole === "super_admin" ? " É necessário ter permissões de super administrador." : " É necessário ter permissões administrativas."}
+                {accessDeniedMessage}
               </CardDescription>
             </CardHeader>
             <CardContent className="text-center">

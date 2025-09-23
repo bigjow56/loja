@@ -27,6 +27,7 @@ import {
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useAdminAuth } from "@/hooks/use-auth";
 import type { Product } from "@shared/schema";
 
 export function AdminProductsList() {
@@ -34,6 +35,7 @@ export function AdminProductsList() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const { toast } = useToast();
+  const { hasPermission } = useAdminAuth();
 
   const { data: products = [], isLoading } = useQuery<Product[]>({
     queryKey: ["/api/admin/products", { search, status: statusFilter, category: categoryFilter }],
@@ -101,12 +103,14 @@ export function AdminProductsList() {
               Gerencie todos os produtos do seu catálogo
             </p>
           </div>
-          <Link href="/admin/products/new">
-            <Button data-testid="button-new-product">
-              <Plus className="mr-2 h-4 w-4" />
-              Novo Produto
-            </Button>
-          </Link>
+          {hasPermission("product:create") && (
+            <Link href="/admin/products/new">
+              <Button data-testid="button-new-product">
+                <Plus className="mr-2 h-4 w-4" />
+                Novo Produto
+              </Button>
+            </Link>
+          )}
         </div>
 
         <Card>
@@ -267,24 +271,28 @@ export function AdminProductsList() {
                                   Visualizar
                                 </DropdownMenuItem>
                               </Link>
-                              <Link href={`/admin/products/${product.id}/edit`}>
-                                <DropdownMenuItem data-testid={`button-edit-${product.id}`}>
-                                  <Edit className="mr-2 h-4 w-4" />
-                                  Editar
-                                </DropdownMenuItem>
-                              </Link>
-                              <DropdownMenuSeparator />
-                              <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                  <DropdownMenuItem 
-                                    className="text-red-600"
-                                    onSelect={(e) => e.preventDefault()}
-                                    data-testid={`button-delete-${product.id}`}
-                                  >
-                                    <Trash2 className="mr-2 h-4 w-4" />
-                                    Excluir
+                              {hasPermission("product:update") && (
+                                <Link href={`/admin/products/${product.id}/edit`}>
+                                  <DropdownMenuItem data-testid={`button-edit-${product.id}`}>
+                                    <Edit className="mr-2 h-4 w-4" />
+                                    Editar
                                   </DropdownMenuItem>
-                                </AlertDialogTrigger>
+                                </Link>
+                              )}
+                              {hasPermission("product:delete") && (
+                                <>
+                                  <DropdownMenuSeparator />
+                                  <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                      <DropdownMenuItem 
+                                        className="text-red-600"
+                                        onSelect={(e) => e.preventDefault()}
+                                        data-testid={`button-delete-${product.id}`}
+                                      >
+                                        <Trash2 className="mr-2 h-4 w-4" />
+                                        Excluir
+                                      </DropdownMenuItem>
+                                    </AlertDialogTrigger>
                                 <AlertDialogContent>
                                   <AlertDialogHeader>
                                     <AlertDialogTitle>Excluir produto</AlertDialogTitle>
@@ -303,8 +311,10 @@ export function AdminProductsList() {
                                       Excluir
                                     </AlertDialogAction>
                                   </AlertDialogFooter>
-                                </AlertDialogContent>
-                              </AlertDialog>
+                                    </AlertDialogContent>
+                                  </AlertDialog>
+                                </>
+                              )}
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </TableCell>

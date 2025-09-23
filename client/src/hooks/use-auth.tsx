@@ -4,7 +4,7 @@ import {
   useMutation,
   UseMutationResult,
 } from "@tanstack/react-query";
-import { insertUserSchema, User as SelectUser, InsertUser } from "@shared/schema";
+import { insertUserSchema, User as SelectUser, InsertUser, Permission, Role, hasPermission, hasAnyPermission, hasAllPermissions, normalizeRole } from "@shared/schema";
 import { getQueryFn, apiRequest, queryClient } from "../lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
@@ -108,21 +108,50 @@ export function useAuth() {
   return context;
 }
 
-// Hook especializado para funcionalidades admin
+// Hook especializado para funcionalidades admin com sistema de permissões
 export function useAdminAuth() {
   const { user, isLoading, error } = useAuth();
   
-  const isAdmin = user?.role === "admin" || user?.role === "super_admin";
-  const isSuperAdmin = user?.role === "super_admin";
+  const userRole = user ? normalizeRole(user.role) : null;
+  
+  const hasPermissionCheck = (permission: Permission): boolean => {
+    if (!user || !userRole) return false;
+    return hasPermission(userRole, permission);
+  };
+  
+  const hasAnyPermissionCheck = (permissions: Permission[]): boolean => {
+    if (!user || !userRole) return false;
+    return hasAnyPermission(userRole, permissions);
+  };
+  
+  const hasAllPermissionsCheck = (permissions: Permission[]): boolean => {
+    if (!user || !userRole) return false;
+    return hasAllPermissions(userRole, permissions);
+  };
+  
+  const hasRoleCheck = (role: Role): boolean => {
+    if (!user || !userRole) return false;
+    // Super admin can access everything
+    if (userRole === "super_admin") return true;
+    return userRole === role;
+  };
+  
+  // Legacy compatibility
+  const isAdmin = hasPermissionCheck("admin:access");
+  const isSuperAdmin = userRole === "super_admin";
   
   return {
     user,
     isLoading,
     error,
-    isAdmin,
-    isSuperAdmin,
+    userRole,
+    isAdmin, // Legacy compatibility
+    isSuperAdmin, // Legacy compatibility
     isAuthenticated: !!user,
-    canAccessAdmin: isAdmin,
-    hasRole: (role: "user" | "admin" | "super_admin") => user?.role === role || (user?.role === "super_admin" && role !== "super_admin")
+    canAccessAdmin: hasPermissionCheck("admin:access"),
+    hasPermission: hasPermissionCheck,
+    hasAnyPermission: hasAnyPermissionCheck,
+    hasAllPermissions: hasAllPermissionsCheck,
+    hasRole: hasRoleCheck
   };
 }

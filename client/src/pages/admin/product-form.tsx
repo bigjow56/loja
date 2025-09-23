@@ -15,31 +15,89 @@ import { AdminLayout } from "@/components/admin-layout";
 import { ArrowLeft, Save, Package } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { z } from "zod";
+import type { Category } from "@shared/schema";
 
-// Form schema with all required fields
+// Enhanced form schema with comprehensive validation
 const productFormSchema = z.object({
-  nome: z.string().min(1, "Nome é obrigatório"),
-  descricao: z.string().min(1, "Descrição é obrigatória"),
-  preco: z.string().min(1, "Preço é obrigatório"),
-  marca: z.string().min(1, "Marca é obrigatória"),
+  nome: z.string()
+    .min(2, "Nome deve ter pelo menos 2 caracteres")
+    .max(255, "Nome muito longo"),
+  descricao: z.string()
+    .min(10, "Descrição deve ter pelo menos 10 caracteres")
+    .max(1000, "Descrição muito longa"),
+  preco: z.string()
+    .min(1, "Preço é obrigatório")
+    .refine((val) => {
+      const num = parseFloat(val.replace(",", "."));
+      return !isNaN(num) && num > 0;
+    }, "Preço deve ser um número válido maior que zero"),
+  marca: z.string()
+    .min(1, "Marca é obrigatória")
+    .max(100, "Nome da marca muito longo"),
   categoria: z.string().min(1, "Categoria é obrigatória"),
-  imageUrl: z.string().min(1, "URL da imagem é obrigatória"),
-  sku: z.string().optional(),
+  categoryId: z.string().optional(),
+  imageUrl: z.string()
+    .min(1, "URL da imagem é obrigatória")
+    .url("URL da imagem deve ser válida"),
+  sku: z.string()
+    .max(100, "SKU muito longo")
+    .optional(),
   status: z.enum(["rascunho", "publicado", "inativo"]),
   isFeatured: z.boolean(),
-  estoque: z.coerce.number().int().min(0),
-  estoqueMinimo: z.coerce.number().int().min(0).optional(),
-  peso: z.string().optional(),
-  categoryId: z.string().optional(),
-  descricaoRica: z.string().optional(),
-  precoPromocional: z.string().optional(),
+  estoque: z.coerce.number()
+    .int("Estoque deve ser um número inteiro")
+    .min(0, "Estoque não pode ser negativo"),
+  estoqueMinimo: z.coerce.number()
+    .int("Estoque mínimo deve ser um número inteiro")
+    .min(0, "Estoque mínimo não pode ser negativo")
+    .default(5),
+  peso: z.string()
+    .optional()
+    .refine((val) => {
+      if (!val || val === "") return true;
+      const num = parseFloat(val.replace(",", "."));
+      return !isNaN(num) && num > 0;
+    }, "Peso deve ser um número válido"),
+  descricaoRica: z.string()
+    .max(5000, "Descrição rica muito longa")
+    .optional(),
+  precoPromocional: z.string()
+    .optional()
+    .refine((val) => {
+      if (!val || val === "") return true;
+      const num = parseFloat(val.replace(",", "."));
+      return !isNaN(num) && num > 0;
+    }, "Preço promocional deve ser um número válido"),
   precoAnterior: z.string().optional(),
-  avaliacao: z.string().optional(),
+  avaliacao: z.string()
+    .optional()
+    .refine((val) => {
+      if (!val || val === "") return true;
+      const num = parseFloat(val.replace(",", "."));
+      return !isNaN(num) && num >= 0 && num <= 5;
+    }, "Avaliação deve ser entre 0 e 5"),
   totalAvaliacoes: z.coerce.number().int().min(0).optional(),
   vendas: z.coerce.number().int().min(0).optional(),
-  desconto: z.coerce.number().int().min(0).max(100).optional(),
-  dimensoes: z.string().optional(),
-  permitirVendaSemEstoque: z.boolean().optional(),
+  desconto: z.coerce.number()
+    .int("Desconto deve ser um número inteiro")
+    .min(0, "Desconto não pode ser negativo")
+    .max(100, "Desconto não pode ser maior que 100%")
+    .optional(),
+  dimensoes: z.string()
+    .max(255, "Dimensões muito longas")
+    .optional(),
+  permitirVendaSemEstoque: z.boolean().default(false),
+}).refine((data) => {
+  // Cross-field validation: promotional price should be less than regular price
+  if (data.precoPromocional && data.preco) {
+    const preco = parseFloat(data.preco.replace(",", "."));
+    const precoPromo = parseFloat(data.precoPromocional.replace(",", "."));
+    return precoPromo < preco;
+  }
+  return true;
+}, {
+  message: "Preço promocional deve ser menor que o preço regular",
+  path: ["precoPromocional"],
 });
 
 type ProductFormData = z.infer<typeof productFormSchema>;
@@ -58,6 +116,11 @@ export function ProductForm({ mode }: ProductFormProps) {
   const { data: product, isLoading: isLoadingProduct } = useQuery({
     queryKey: ["/api/products", id],
     enabled: mode === "edit" && !!id,
+  });
+
+  // Fetch categories for the dropdown
+  const { data: categories = [] } = useQuery<Category[]>({
+    queryKey: ["/api/categories"],
   });
 
   const form = useForm<ProductFormData>({
@@ -350,13 +413,31 @@ export function ProductForm({ mode }: ProductFormProps) {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Categoria</FormLabel>
-                        <FormControl>
-                          <Input 
-                            placeholder="Digite a categoria" 
-                            data-testid="input-categoria"
-                            {...field} 
-                          />
-                        </FormControl>
+                        <Select onValueChange={(value) => {
+                          field.onChange(value);
+                          // Find the category and set categoryId
+                          const category = categories.find(cat => cat.nome === value);
+                          if (category) {
+                            form.setValue("categoryId", category.id);
+                          }
+                        }} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger data-testid="select-categoria">
+                              <SelectValue placeholder="Selecione uma categoria" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {categories.length > 0 ? (
+                              categories.map((category) => (
+                                <SelectItem key={category.id} value={category.nome}>
+                                  {category.nome}
+                                </SelectItem>
+                              ))
+                            ) : (
+                              <SelectItem value="geral">Geral</SelectItem>
+                            )}
+                          </SelectContent>
+                        </Select>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -449,6 +530,27 @@ export function ProductForm({ mode }: ProductFormProps) {
 
                   <FormField
                     control={form.control}
+                    name="precoPromocional"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Preço Promocional (R$)</FormLabel>
+                        <FormControl>
+                          <Input 
+                            placeholder="0,00" 
+                            data-testid="input-promo-price"
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          Deixe vazio se não há promoção
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
                     name="peso"
                     render={({ field }) => (
                       <FormItem>
@@ -517,6 +619,103 @@ export function ProductForm({ mode }: ProductFormProps) {
                       </FormItem>
                     )}
                   />
+
+                  <FormField
+                    control={form.control}
+                    name="permitirVendaSemEstoque"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                        <div className="space-y-0.5">
+                          <FormLabel className="text-base">Permitir Venda sem Estoque</FormLabel>
+                          <FormDescription>
+                            Permitir vendas mesmo quando estoque for zero
+                          </FormDescription>
+                        </div>
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                            data-testid="switch-allow-oversell"
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                </CardContent>
+              </Card>
+
+              {/* Campos Avançados */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Campos Avançados</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="descricaoRica"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Descrição Rica (HTML)</FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            placeholder="Descrição detalhada com formatação HTML..."
+                            className="min-h-[120px]"
+                            data-testid="input-rich-description"
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          Descrição detalhada com suporte a HTML básico
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="dimensoes"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Dimensões</FormLabel>
+                        <FormControl>
+                          <Input 
+                            placeholder="20x15x10 cm"
+                            data-testid="input-dimensions"
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          Comprimento x Largura x Altura
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="desconto"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Desconto (%)</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number"
+                            min="0"
+                            max="100"
+                            placeholder="0"
+                            data-testid="input-discount"
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          Percentual de desconto (0-100%)
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </CardContent>
               </Card>
 
@@ -546,6 +745,23 @@ export function ProductForm({ mode }: ProductFormProps) {
                       </FormItem>
                     )}
                   />
+                  
+                  {/* Preview da imagem */}
+                  {form.watch("imageUrl") && (
+                    <div className="mt-4">
+                      <FormLabel>Preview da Imagem</FormLabel>
+                      <div className="mt-2 border rounded-lg overflow-hidden max-w-xs">
+                        <img 
+                          src={form.watch("imageUrl")} 
+                          alt="Preview do produto"
+                          className="w-full h-48 object-cover"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                          }}
+                        />
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>

@@ -9,7 +9,7 @@ export const users = pgTable("users", {
   email: varchar("email", { length: 255 }).notNull().unique(),
   passwordHash: text("password_hash").notNull(),
   nome: varchar("nome", { length: 255 }).notNull(),
-  role: varchar("role", { length: 50 }).notNull().default("user"), // user, admin, super_admin
+  role: varchar("role", { length: 50 }).notNull().default("user"), // user, staff, manager, super_admin
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -349,7 +349,7 @@ export const favoritesRelations = relations(favorites, ({ one }) => ({
 export const insertUserSchema = createInsertSchema(users, {
   email: z.string().email("Email inválido"),
   nome: z.string().min(2, "Nome deve ter pelo menos 2 caracteres").max(255, "Nome muito longo"),
-  role: z.enum(["user", "admin", "super_admin"]).default("user"),
+  role: z.enum(["user", "staff", "manager", "super_admin"]).default("user"),
 }).omit({
   id: true,
   createdAt: true,
@@ -507,3 +507,109 @@ export type StockAlert = {
   minimumStock: number;
   variationName?: string;
 };
+
+// RBAC - Role-Based Access Control types
+export type Role = "user" | "staff" | "manager" | "super_admin";
+
+export type Permission = 
+  | "admin:access"           // Access to admin panel
+  | "product:read"           // View products in admin
+  | "product:create"         // Create new products
+  | "product:update"         // Update existing products
+  | "product:delete"         // Delete products
+  | "product:publish"        // Change product status
+  | "category:read"          // View categories
+  | "category:manage"        // Create/update/delete categories
+  | "tag:read"              // View tags
+  | "tag:manage"            // Create/update/delete tags
+  | "order:read"            // View orders
+  | "order:update"          // Update order status
+  | "stock:read"            // View stock levels
+  | "stock:adjust"          // Adjust stock quantities
+  | "price:read"            // View pricing
+  | "price:change"          // Change product prices
+  | "user:read"             // View users
+  | "user:manage"           // Create/update/delete users
+  | "dashboard:view"        // View dashboard stats
+  | "settings:read"         // View system settings
+  | "settings:manage";      // Change system settings
+
+// Role-based permissions mapping
+export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
+  user: [], // No admin permissions for regular users
+  
+  staff: [
+    "admin:access",
+    "product:read",
+    "product:update",        // Can update but not create/delete
+    "stock:read",
+    "stock:adjust",
+    "dashboard:view",
+  ],
+  
+  manager: [
+    "admin:access",
+    "product:read",
+    "product:create",
+    "product:update", 
+    "product:delete",
+    "product:publish",
+    "category:read",
+    "category:manage",
+    "tag:read",
+    "tag:manage",
+    "order:read",
+    "order:update",
+    "stock:read",
+    "stock:adjust",
+    "price:read",
+    "price:change",
+    "dashboard:view",
+    "settings:read",
+  ],
+  
+  super_admin: [
+    "admin:access",
+    "product:read",
+    "product:create",
+    "product:update",
+    "product:delete", 
+    "product:publish",
+    "category:read",
+    "category:manage",
+    "tag:read",
+    "tag:manage",
+    "order:read",
+    "order:update",
+    "stock:read",
+    "stock:adjust",
+    "price:read",
+    "price:change",
+    "user:read",
+    "user:manage",
+    "dashboard:view",
+    "settings:read",
+    "settings:manage",
+  ],
+};
+
+// Helper function to check if a role has a specific permission
+export function hasPermission(role: Role, permission: Permission): boolean {
+  return ROLE_PERMISSIONS[role].includes(permission);
+}
+
+// Helper function to check if a role has any of the provided permissions
+export function hasAnyPermission(role: Role, permissions: Permission[]): boolean {
+  return permissions.some(permission => hasPermission(role, permission));
+}
+
+// Helper function to check if a role has all of the provided permissions
+export function hasAllPermissions(role: Role, permissions: Permission[]): boolean {
+  return permissions.every(permission => hasPermission(role, permission));
+}
+
+// Normalize legacy "admin" role to "manager" for backward compatibility
+export function normalizeRole(role: string): Role {
+  if (role === "admin") return "manager";
+  return role as Role;
+}

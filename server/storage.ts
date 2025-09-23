@@ -4,6 +4,8 @@ import {
   cartItems,
   orders,
   orderItems,
+  categories,
+  tags,
   type User,
   type InsertUser,
   type Product,
@@ -15,6 +17,8 @@ import {
   type InsertOrder,
   type OrderWithItems,
   type OrderItem,
+  type Category,
+  type Tag,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, ne, desc, asc, sql } from "drizzle-orm";
@@ -36,6 +40,12 @@ export interface IStorage {
   createProduct(product: InsertProduct): Promise<Product>;
   updateProduct(id: string, product: Partial<InsertProduct>): Promise<Product | undefined>;
   deleteProduct(id: string): Promise<void>;
+  
+  // Category operations
+  getAllCategories(): Promise<Category[]>;
+  
+  // Tag operations
+  getAllTags(): Promise<Tag[]>;
   
   // Admin operations
   getDashboardStats(): Promise<{
@@ -106,6 +116,14 @@ export class DatabaseStorage implements IStorage {
   // Product operations
   async getAllProducts(): Promise<Product[]> {
     return await db.select().from(products);
+  }
+
+  async getAllCategories(): Promise<Category[]> {
+    return await db.select().from(categories);
+  }
+
+  async getAllTags(): Promise<Tag[]> {
+    return await db.select().from(tags);
   }
 
   async getProduct(id: string): Promise<Product | undefined> {

@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupAuth, requireAnyAdminRole } from "./auth";
+import { setupAuth, requireAnyAdminRole, requirePermission, requireAnyPermission } from "./auth";
 import { insertCartItemSchema, insertOrderSchema, insertProductSchema } from "@shared/schema";
 import { z } from "zod";
 
@@ -247,8 +247,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Admin routes (protected with admin role)
-  app.get("/api/admin/dashboard", requireAnyAdminRole, async (req, res) => {
+  // Admin routes (protected with specific permissions)
+  app.get("/api/admin/dashboard", requirePermission("dashboard:view"), async (req, res) => {
     try {
       const stats = await storage.getDashboardStats();
       res.json(stats);
@@ -258,7 +258,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/admin/products", requireAnyAdminRole, async (req, res) => {
+  app.get("/api/admin/products", requirePermission("product:read"), async (req, res) => {
     try {
       const { search, status, category } = req.query;
       let products = await storage.getAllProducts();
@@ -288,7 +288,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/admin/products", requireAnyAdminRole, async (req, res) => {
+  app.post("/api/admin/products", requirePermission("product:create"), async (req, res) => {
     try {
       const parseResult = insertProductSchema.safeParse(req.body);
       if (!parseResult.success) {
@@ -306,7 +306,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/admin/products/:id", requireAnyAdminRole, async (req, res) => {
+  app.put("/api/admin/products/:id", requirePermission("product:update"), async (req, res) => {
     try {
       const parseResult = insertProductSchema.partial().safeParse(req.body);
       if (!parseResult.success) {
@@ -328,7 +328,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/admin/products/:id", requireAnyAdminRole, async (req, res) => {
+  app.delete("/api/admin/products/:id", requirePermission("product:delete"), async (req, res) => {
     try {
       const product = await storage.getProduct(req.params.id);
       if (!product) {
@@ -340,6 +340,88 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting product:", error);
       res.status(500).json({ message: "Failed to delete product" });
+    }
+  });
+
+  // Categories routes (admin only)
+  app.get("/api/categories", async (req, res) => {
+    try {
+      const categories = await storage.getAllCategories();
+      res.json(categories);
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+      res.status(500).json({ message: "Failed to fetch categories" });
+    }
+  });
+
+  app.post("/api/admin/categories", requirePermission("category:manage"), async (req, res) => {
+    try {
+      // Implement category creation
+      res.status(501).json({ message: "Category creation not implemented yet" });
+    } catch (error) {
+      console.error("Error creating category:", error);
+      res.status(500).json({ message: "Failed to create category" });
+    }
+  });
+
+  app.put("/api/admin/categories/:id", requirePermission("category:manage"), async (req, res) => {
+    try {
+      // Implement category update
+      res.status(501).json({ message: "Category update not implemented yet" });
+    } catch (error) {
+      console.error("Error updating category:", error);
+      res.status(500).json({ message: "Failed to update category" });
+    }
+  });
+
+  app.delete("/api/admin/categories/:id", requirePermission("category:manage"), async (req, res) => {
+    try {
+      // Implement category deletion
+      res.status(501).json({ message: "Category deletion not implemented yet" });
+    } catch (error) {
+      console.error("Error deleting category:", error);
+      res.status(500).json({ message: "Failed to delete category" });
+    }
+  });
+
+  // Tags routes (admin only)
+  app.get("/api/tags", async (req, res) => {
+    try {
+      const tags = await storage.getAllTags();
+      res.json(tags);
+    } catch (error) {
+      console.error("Error fetching tags:", error);
+      res.status(500).json({ message: "Failed to fetch tags" });
+    }
+  });
+
+  app.post("/api/admin/tags", requirePermission("tag:manage"), async (req, res) => {
+    try {
+      // Implement tag creation
+      res.status(501).json({ message: "Tag creation not implemented yet" });
+    } catch (error) {
+      console.error("Error creating tag:", error);
+      res.status(500).json({ message: "Failed to create tag" });
+    }
+  });
+
+  app.put("/api/admin/tags/:id", requirePermission("tag:manage"), async (req, res) => {
+    try {
+      // Implement tag update
+      res.status(501).json({ message: "Tag update not implemented yet" });
+    } catch (error) {
+      console.error("Error updating tag:", error);
+      res.status(500).json({ message: "Failed to update tag" });
+    }
+  });
+
+  app.delete("/api/admin/tags/:id", requirePermission("tag:manage"), async (req, res) => {
+    try {
+      // Implement tag deletion
+      res.status(501).json({ message: "Tag deletion not implemented yet" });
+    } catch (error) {
+      console.error("Error deleting tag:", error);
+      res.status(500).json({ message: "Failed to delete tag" });
     }
   });
 

@@ -1,0 +1,91 @@
+1. Control admin access with user roles
+
+Níveis de acesso:
+
+Super Admin (acesso total)
+
+Manager (produtos, pedidos, clientes, mas sem mexer em configs críticas)
+
+Staff (restrito a estoque, suporte ou financeiro)
+
+Melhores práticas:
+
+Usar JWT + claims de permissões.
+
+Ter tabela users e roles, com relacionamento N:N (user_roles).
+
+Middleware de autorização na API.
+
+Ferramentas prontas: Casbin (RBAC), Keycloak, Auth0.
+
+🛠 2. Create ways to add/change product details
+
+CRUD completo de produtos no painel:
+
+Nome, descrição, SKU, preço, desconto, estoque.
+
+Variações (tamanho, cor, modelo).
+
+Validação: impedir preço negativo, estoque negativo, campos obrigatórios faltando.
+
+Boas práticas: permitir salvar como rascunho e depois publicar.
+
+🏷 3. Manage product categories and labels
+
+Categorias hierárquicas (Ex: Eletrônicos > Celulares > Acessórios).
+
+Labels/Tags (Ex: “Promoção”, “Mais Vendidos”, “Novo”).
+
+Relacionamentos:
+
+Produto pode ter 1 categoria principal.
+
+Produto pode ter várias tags (N:N).
+
+UI: painel com drag & drop para organizar categorias.
+
+🖼 4. Upload and resize product pictures
+
+Armazenamento:
+
+Local (simples, mas limitado).
+
+Cloud (AWS S3, Supabase, Cloudinary).
+
+Redimensionamento automático:
+
+Exibir versão otimizada (thumbnail, médio, grande).
+
+Evitar imagens gigantes que deixam a loja lenta.
+
+Boas práticas: usar CDN para cache e performance.
+
+🖥 5. Build admin screen for products
+
+Interface amigável:
+
+Lista de produtos com busca, filtro e paginação.
+
+Ações rápidas: editar, ativar/desativar, duplicar produto.
+
+Botão "Adicionar Produto" destacado.
+
+UX: mostrar preview da imagem do produto antes de salvar.
+
+Stack recomendada: React/Vue + tabela com filtros (Datatables, AgGrid ou TanStack Table).
+
+📦 6. Track product stock and notify low
+
+Controle de estoque automático:
+
+Reduzir estoque quando o pedido for pago.
+
+Impedir venda quando chegar a zero (opcional: pré-venda).
+
+Alertas de estoque baixo:
+
+Notificação no painel (badge vermelha).
+
+Envio de e-mail ou integração com Slack/Discord.
+
+Boas práticas: permitir configurar o nível crítico (ex: “avisar quando tiver < 10 unidades”).

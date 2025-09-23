@@ -5,7 +5,7 @@ import session from "express-session";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
-import { User as SelectUser } from "@shared/schema";
+import { User as SelectUser, Permission, Role, hasPermission, hasAnyPermission, hasAllPermissions, normalizeRole } from "@shared/schema";
 
 declare global {
   namespace Express {
@@ -115,13 +115,83 @@ export function requireAuth(req: any, res: any, next: any) {
   next();
 }
 
-export function requireRole(role: "admin" | "super_admin") {
+// New permission-based middleware functions
+export function requirePermission(permission: Permission) {
   return (req: any, res: any, next: any) => {
     if (!req.isAuthenticated()) {
       return res.status(401).json({ message: "Unauthorized: Please login" });
     }
     
-    if (req.user.role !== role && req.user.role !== "super_admin") {
+    const userRole = normalizeRole(req.user.role) as Role;
+    
+    if (!hasPermission(userRole, permission)) {
+      return res.status(403).json({ 
+        message: `Forbidden: Permission '${permission}' required`,
+        userRole: req.user.role,
+        requiredPermission: permission
+      });
+    }
+    
+    next();
+  };
+}
+
+export function requireAnyPermission(permissions: Permission[]) {
+  return (req: any, res: any, next: any) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Unauthorized: Please login" });
+    }
+    
+    const userRole = normalizeRole(req.user.role) as Role;
+    
+    if (!hasAnyPermission(userRole, permissions)) {
+      return res.status(403).json({ 
+        message: `Forbidden: One of these permissions required: ${permissions.join(', ')}`,
+        userRole: req.user.role,
+        requiredPermissions: permissions
+      });
+    }
+    
+    next();
+  };
+}
+
+export function requireAllPermissions(permissions: Permission[]) {
+  return (req: any, res: any, next: any) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Unauthorized: Please login" });
+    }
+    
+    const userRole = normalizeRole(req.user.role) as Role;
+    
+    if (!hasAllPermissions(userRole, permissions)) {
+      return res.status(403).json({ 
+        message: `Forbidden: All these permissions required: ${permissions.join(', ')}`,
+        userRole: req.user.role,
+        requiredPermissions: permissions
+      });
+    }
+    
+    next();
+  };
+}
+
+// Legacy role-based middleware (now using permissions internally)
+export function requireRole(role: "admin" | "super_admin" | "manager" | "staff") {
+  return (req: any, res: any, next: any) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Unauthorized: Please login" });
+    }
+    
+    const userRole = normalizeRole(req.user.role) as Role;
+    const targetRole = normalizeRole(role) as Role;
+    
+    // Super admin can access everything
+    if (userRole === "super_admin") {
+      return next();
+    }
+    
+    if (userRole !== targetRole) {
       return res.status(403).json({ 
         message: `Forbidden: ${role} role required`,
         userRole: req.user.role 
@@ -133,16 +203,5 @@ export function requireRole(role: "admin" | "super_admin") {
 }
 
 export function requireAnyAdminRole(req: any, res: any, next: any) {
-  if (!req.isAuthenticated()) {
-    return res.status(401).json({ message: "Unauthorized: Please login" });
-  }
-  
-  if (req.user.role !== "admin" && req.user.role !== "super_admin") {
-    return res.status(403).json({ 
-      message: "Forbidden: Admin role required",
-      userRole: req.user.role 
-    });
-  }
-  
-  next();
+  return requirePermission("admin:access")(req, res, next);
 }

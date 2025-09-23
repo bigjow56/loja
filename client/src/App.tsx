@@ -22,6 +22,9 @@ import { CategoriesList } from "@/pages/admin/categories-list";
 import { CategoryForm } from "@/pages/admin/category-form";
 import { TagsList } from "@/pages/admin/tags-list";
 import { TagForm } from "@/pages/admin/tag-form";
+import { StockPage } from "@/pages/admin/stock-page";
+import { UsersPage } from "@/pages/admin/users-page";
+import { SettingsPage } from "@/pages/admin/settings-page";
 import NotFound from "@/pages/not-found";
 
 // Wrapper components for edit modes
@@ -53,6 +56,9 @@ function Router() {
         <ProtectedAdminRoute path="/admin/tags" component={TagsList} />
         <ProtectedAdminRoute path="/admin/tags/create" component={() => <TagForm mode="create" />} />
         <ProtectedAdminRoute path="/admin/tags/:id/edit" component={TagEditWrapper} />
+        <ProtectedAdminRoute path="/admin/stock" component={StockPage} />
+        <ProtectedAdminRoute path="/admin/users" component={UsersPage} />
+        <ProtectedAdminRoute path="/admin/settings" component={SettingsPage} />
         
         {/* Regular app routes with header */}
         <Route path="/" component={() => (

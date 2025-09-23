@@ -12,6 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { AdminLayout } from "@/components/admin-layout";
+import { MultiImageUpload } from "@/components/ui/multi-image-upload";
 import { ArrowLeft, Save, Package } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { z } from "zod";
@@ -37,8 +38,7 @@ const productFormSchema = z.object({
   categoria: z.string().min(1, "Categoria é obrigatória"),
   categoryId: z.string().optional(),
   imageUrl: z.string()
-    .min(1, "URL da imagem é obrigatória")
-    .url("URL da imagem deve ser válida"),
+    .optional(), // Made optional since we'll use MultiImageUpload
   sku: z.string()
     .max(100, "SKU muito longo")
     .optional(),
@@ -209,10 +209,7 @@ export function ProductForm({ mode }: ProductFormProps) {
         avaliacao: data.avaliacao ? parseFloat(data.avaliacao.replace(",", ".")) : 5.0,
       };
 
-      return await apiRequest("/api/admin/products", {
-        method: "POST",
-        body: JSON.stringify(productData),
-      });
+      return await apiRequest("POST", "/api/admin/products", productData);
     },
     onSuccess: () => {
       toast({
@@ -246,10 +243,7 @@ export function ProductForm({ mode }: ProductFormProps) {
         avaliacao: data.avaliacao ? parseFloat(data.avaliacao.replace(",", ".")) : 5.0,
       };
 
-      return await apiRequest(`/api/admin/products/${id}`, {
-        method: "PUT",
-        body: JSON.stringify(productData),
-      });
+      return await apiRequest("PUT", `/api/admin/products/${id}`, productData);
     },
     onSuccess: () => {
       toast({
@@ -717,35 +711,46 @@ export function ProductForm({ mode }: ProductFormProps) {
                 </CardContent>
               </Card>
 
-              {/* Imagens */}
+              {/* Imagens - Sistema Avançado de Múltiplas Imagens */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Imagens</CardTitle>
+                  <CardTitle>Imagens do Produto</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="imageUrl"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Imagem Principal (URL)</FormLabel>
-                        <FormControl>
-                          <Input 
-                            placeholder="https://exemplo.com/imagem.jpg" 
-                            data-testid="input-main-image"
-                            {...field} 
-                          />
-                        </FormControl>
-                        <FormDescription>
-                          URL da imagem principal do produto
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  {/* Preview da imagem */}
-                  {form.watch("imageUrl") && (
+                  {/* Fallback para URL simples em caso de criação */}
+                  {mode === "create" && (
+                    <FormField
+                      control={form.control}
+                      name="imageUrl"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Imagem Principal (URL) - Temporária</FormLabel>
+                          <FormControl>
+                            <Input 
+                              placeholder="https://exemplo.com/imagem.jpg" 
+                              data-testid="input-main-image"
+                              {...field} 
+                            />
+                          </FormControl>
+                          <FormDescription>
+                            URL temporária para a imagem principal. Após criar o produto, você poderá adicionar múltiplas imagens.
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
+
+                  {/* Sistema Avançado para Edição */}
+                  {mode === "edit" && id && (
+                    <MultiImageUpload 
+                      productId={id}
+                      maxImages={10}
+                    />
+                  )}
+
+                  {/* Preview da imagem temporária */}
+                  {mode === "create" && form.watch("imageUrl") && (
                     <div className="mt-4">
                       <FormLabel>Preview da Imagem</FormLabel>
                       <div className="mt-2 border rounded-lg overflow-hidden max-w-xs">

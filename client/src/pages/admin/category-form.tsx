@@ -109,7 +109,7 @@ export function CategoryForm({ mode, id }: CategoryFormProps) {
       const categoryData = {
         ...data,
         slug,
-        parentId: data.parentId === "" ? null : data.parentId,
+        parentId: data.parentId === "" || data.parentId === "none" ? null : data.parentId,
         imagemUrl: data.imagemUrl === "" ? null : data.imagemUrl,
       };
 
@@ -140,7 +140,7 @@ export function CategoryForm({ mode, id }: CategoryFormProps) {
       const categoryData = {
         ...data,
         slug,
-        parentId: data.parentId === "" ? null : data.parentId,
+        parentId: data.parentId === "" || data.parentId === "none" ? null : data.parentId,
         imagemUrl: data.imagemUrl === "" ? null : data.imagemUrl,
       };
 
@@ -287,7 +287,7 @@ export function CategoryForm({ mode, id }: CategoryFormProps) {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="">Nenhuma (categoria raiz)</SelectItem>
+                          <SelectItem value="none">Nenhuma (categoria raiz)</SelectItem>
                           {availableParentCategories.map((category) => (
                             <SelectItem key={category.id} value={category.id}>
                               {category.nome}

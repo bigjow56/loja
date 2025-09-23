@@ -65,8 +65,9 @@ export default function AuthPage() {
   const onRegister = (data: RegisterFormData) => {
     registerMutation.mutate({
       email: data.email,
-      password: data.password, // Will be hashed on backend
+      passwordHash: data.password, // Will be hashed on backend
       nome: data.nome,
+      role: "user", // Default role for new registrations
     });
   };
 

@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, requireAnyAdminRole, requirePermission, requireAnyPermission } from "./auth";
-import { insertCartItemSchema, insertOrderSchema, insertProductSchema } from "@shared/schema";
+import { insertCartItemSchema, insertOrderSchema, insertProductSchema, insertCategorySchema } from "@shared/schema";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -343,7 +343,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Categories routes (admin only)
+  // Categories routes
   app.get("/api/categories", async (req, res) => {
     try {
       const categories = await storage.getAllCategories();
@@ -354,10 +354,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/categories/:id", async (req, res) => {
+    try {
+      const category = await storage.getCategory(req.params.id);
+      if (!category) {
+        return res.status(404).json({ message: "Category not found" });
+      }
+      res.json(category);
+    } catch (error) {
+      console.error("Error fetching category:", error);
+      res.status(500).json({ message: "Failed to fetch category" });
+    }
+  });
+
   app.post("/api/admin/categories", requirePermission("category:manage"), async (req, res) => {
     try {
-      const categoryData = req.body;
-      const category = await storage.createCategory(categoryData);
+      const parseResult = insertCategorySchema.safeParse(req.body);
+      if (!parseResult.success) {
+        return res.status(400).json({
+          message: "Invalid category data",
+          errors: parseResult.error.errors
+        });
+      }
+
+      const category = await storage.createCategory(parseResult.data);
       res.status(201).json(category);
     } catch (error) {
       console.error("Error creating category:", error);
@@ -367,8 +387,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/admin/categories/:id", requirePermission("category:manage"), async (req, res) => {
     try {
-      const categoryData = req.body;
-      const category = await storage.updateCategory(req.params.id, categoryData);
+      const parseResult = insertCategorySchema.partial().safeParse(req.body);
+      if (!parseResult.success) {
+        return res.status(400).json({
+          message: "Invalid category data",
+          errors: parseResult.error.errors
+        });
+      }
+
+      const category = await storage.updateCategory(req.params.id, parseResult.data);
       if (!category) {
         return res.status(404).json({ message: "Category not found" });
       }

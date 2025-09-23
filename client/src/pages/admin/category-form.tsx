@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { z } from "zod";
+import { insertCategorySchema } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,19 +20,9 @@ import { useAuth } from "@/hooks/use-auth";
 import { ProtectedAdminRoute } from "@/lib/protected-admin-route";
 import type { Category } from "@shared/schema";
 
-// Form schema with comprehensive validation
-const categoryFormSchema = z.object({
-  nome: z.string()
-    .min(1, "Nome é obrigatório")
-    .min(2, "Nome deve ter pelo menos 2 caracteres")
-    .max(255, "Nome muito longo"),
-  slug: z.string()
-    .optional(), // Auto-generated from nome
-  descricao: z.string()
-    .max(1000, "Descrição muito longa")
-    .optional(),
-  parentId: z.string()
-    .optional(),
+// Extended form schema using shared schema
+const categoryFormSchema = insertCategorySchema.extend({
+  parentId: z.string().optional(),
   imagemUrl: z.string()
     .url("URL da imagem inválida")
     .optional()
@@ -41,6 +32,7 @@ const categoryFormSchema = z.object({
     .int("Ordem deve ser um número inteiro")
     .min(0, "Ordem deve ser positiva")
     .optional(),
+  slug: z.string().optional(), // Auto-generated from nome
 });
 
 type CategoryFormData = z.infer<typeof categoryFormSchema>;
@@ -187,7 +179,7 @@ export function CategoryForm({ mode, id }: CategoryFormProps) {
       <AdminLayout>
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
-            <Folder className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+            <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
             <p className="text-muted-foreground">Carregando categoria...</p>
           </div>
         </div>
